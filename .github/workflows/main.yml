@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0
 
       - name: Push to dokku
-        uses: dokku/github-action@MOODLE_401_STABLE
+        uses: dokku/github-action@master
         with:
 
           git_remote_url: "ssh://dokku@201.168.124.34/campus-virtual"
