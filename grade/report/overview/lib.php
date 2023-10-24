@@ -151,13 +151,13 @@ class grade_report_overview extends grade_report {
         // setting up table headers
         if ($this->showrank['any']) {
             $tablecolumns = array('coursename', 'grade', 'rank');
-            $tableheaders = array(get_string('coursename', 'grades'),
-                get_string('gradenoun'),
-                get_string('rank', 'grades'));
+            $tableheaders = array(grade_helper::get_lang_string('coursename', 'grades'),
+                grade_helper::get_lang_string('gradenoun'),
+                grade_helper::get_lang_string('rank', 'grades'));
         } else {
             $tablecolumns = array('coursename', 'grade');
-            $tableheaders = array(get_string('coursename', 'grades'),
-                get_string('gradenoun'));
+            $tableheaders = array(grade_helper::get_lang_string('coursename', 'grades'),
+                grade_helper::get_lang_string('gradenoun'));
         }
         $this->table = new flexible_table('grade-report-overview-'.$this->user->id);
 

@@ -41,7 +41,6 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 
 require_once($CFG->dirroot . '/webservice/tests/helpers.php');
-require_once($CFG->dirroot . '/mod/quiz/tests/quiz_question_helper_test_trait.php');
 
 /**
  * Silly class to access mod_quiz_external internal methods.
@@ -86,8 +85,6 @@ class testable_mod_quiz_external extends mod_quiz_external {
  * @since      Moodle 3.1
  */
 class external_test extends externallib_advanced_testcase {
-
-    use \quiz_question_helper_test_trait;
 
     /** @var \stdClass course record. */
     protected $course;
@@ -249,7 +246,7 @@ class external_test extends externallib_advanced_testcase {
                                 'timeopen', 'timeclose', 'grademethod', 'section', 'visible', 'groupmode', 'groupingid',
                                 'attempts', 'timelimit', 'grademethod', 'decimalpoints', 'questiondecimalpoints', 'sumgrades',
                                 'grade', 'preferredbehaviour', 'hasfeedback'];
-        $userswithaccessfields = ['attemptonlast', 'reviewattempt', 'reviewcorrectness', 'reviewmaxmarks', 'reviewmarks',
+        $userswithaccessfields = ['attemptonlast', 'reviewattempt', 'reviewcorrectness', 'reviewmarks',
                                         'reviewspecificfeedback', 'reviewgeneralfeedback', 'reviewrightanswer',
                                         'reviewoverallfeedback', 'questionsperpage', 'navmethod',
                                         'browsersecurity', 'delay1', 'delay2', 'showuserpicture', 'showblocks',
@@ -1901,7 +1898,7 @@ class external_test extends externallib_advanced_testcase {
         $question = $questiongenerator->create_question('truefalse', null, ['category' => $cat->id]);
         $question = $questiongenerator->create_question('essay', null, ['category' => $cat->id]);
 
-        $this->add_random_questions($quiz->id, 0, $cat->id, 1);
+        quiz_add_random_questions($quiz, 0, $cat->id, 1, false);
 
         $quizobj = quiz_settings::create($quiz->id, $this->student->id);
 
@@ -2027,8 +2024,8 @@ class external_test extends externallib_advanced_testcase {
         $question = $questiongenerator->create_question('essay', null, ['category' => $anothercat->id]);
 
         // Add a couple of random questions from the same category.
-        $this->add_random_questions($quiz->id, 0, $cat->id, 1);
-        $this->add_random_questions($quiz->id, 0, $cat->id, 1);
+        quiz_add_random_questions($quiz, 0, $cat->id, 1, false);
+        quiz_add_random_questions($quiz, 0, $cat->id, 1, false);
 
         $this->setUser($this->student);
 
@@ -2042,7 +2039,7 @@ class external_test extends externallib_advanced_testcase {
 
         // Add more questions to the quiz, this time from the other category.
         $this->setAdminUser();
-        $this->add_random_questions($quiz->id, 0, $anothercat->id, 1);
+        quiz_add_random_questions($quiz, 0, $anothercat->id, 1, false);
 
         $this->setUser($this->student);
         $result = mod_quiz_external::get_quiz_required_qtypes($quiz->id);

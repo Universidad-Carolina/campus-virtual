@@ -86,7 +86,6 @@ class externallib_test extends externallib_advanced_testcase {
         $externaltoken->contextid = 1;
         $externaltoken->creatorid = $USER->id;
         $externaltoken->timecreated = time();
-        $externaltoken->name = \core_external\util::generate_token_name();
         $DB->insert_record('external_tokens', $externaltoken);
 
         $siteinfo = \core_webservice_external::get_site_info();
@@ -155,7 +154,6 @@ class externallib_test extends externallib_advanced_testcase {
         $externaltoken->contextid = 1;
         $externaltoken->creatorid = $USER->id;
         $externaltoken->timecreated = time();
-        $externaltoken->name = \core_external\util::generate_token_name();
         $DB->insert_record('external_tokens', $externaltoken);
 
         // Set a home page by user preferences.
@@ -262,7 +260,6 @@ class externallib_test extends externallib_advanced_testcase {
         $externaltoken->contextid = 1;
         $externaltoken->creatorid = $USER->id;
         $externaltoken->timecreated = time();
-        $externaltoken->name = \core_external\util::generate_token_name();
         $DB->insert_record('external_tokens', $externaltoken);
 
         // Execution should complete.

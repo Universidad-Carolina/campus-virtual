@@ -560,9 +560,7 @@ ORDER BY
      * @return array of records. See the SQL in this function to see the fields available.
      */
     public function load_questions_usages_latest_steps(qubaid_condition $qubaids, $slots = null, $fields = null) {
-        if ($slots === []) {
-            return [];
-        } else if ($slots !== null) {
+        if ($slots !== null) {
             [$slottest, $params] = $this->db->get_in_or_equal($slots, SQL_PARAMS_NAMED, 'slot');
             $slotwhere = " AND qa.slot {$slottest}";
         } else {

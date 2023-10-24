@@ -84,8 +84,6 @@ class check_request {
      * @return PromiseInterface
      */
     public function __invoke(RequestInterface $request, array $options): PromiseInterface {
-        global $USER;
-
         $fn = $this->nexthandler;
         $settings = $this->settings;
 
@@ -101,13 +99,7 @@ class check_request {
         }
 
         if ($this->securityhelper->url_is_blocked((string) $request->getUri())) {
-            $msg = $this->securityhelper->get_blocked_url_string();
-            debugging(
-                sprintf('Blocked %s [user %d]', $msg, $USER->id),
-                DEBUG_NONE
-            );
-
-            throw new RequestException($msg, $request);
+            throw new RequestException($this->securityhelper->get_blocked_url_string(), $request);
         }
 
         return $fn($request, $options);

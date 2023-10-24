@@ -89,7 +89,7 @@ class core extends H5PCore {
                 'core_h5p',
                 'libraries',
                 $library->id,
-                "/" . self::libraryToFolderName($dependency),
+                "/" . self::libraryToString($dependency, true),
                 ''
             ))->out(false);
         }

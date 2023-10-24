@@ -131,9 +131,9 @@ class meeting {
     /**
      * Get meeting attendees
      *
-     * @return array[]
+     * @return mixed
      */
-    public function get_attendees(): array {
+    public function get_attendees() {
         return $this->get_meeting_info()->attendees ?? [];
     }
 
@@ -166,13 +166,7 @@ class meeting {
         $presentation = $this->instance->get_presentation_for_bigbluebutton_upload(); // The URL must contain nonce.
         $presentationname = $presentation['name'] ?? null;
         $presentationurl = $presentation['url'] ?? null;
-        $response = bigbluebutton_proxy::create_meeting(
-            $data,
-            $metadata,
-            $presentationname,
-            $presentationurl,
-            $this->instance->get_instance_id()
-        );
+        $response = bigbluebutton_proxy::create_meeting($data, $metadata, $presentationname, $presentationurl);
         // New recording management: Insert a recordingID that corresponds to the meeting created.
         if ($this->instance->is_recorded()) {
             $recording = new recording(0, (object) [
@@ -190,11 +184,7 @@ class meeting {
      * Send an end meeting message to BBB server
      */
     public function end_meeting() {
-        bigbluebutton_proxy::end_meeting(
-            $this->instance->get_meeting_id(),
-            $this->instance->get_moderator_password(),
-            $this->instance->get_instance_id()
-        );
+        bigbluebutton_proxy::end_meeting($this->instance->get_meeting_id(), $this->instance->get_moderator_password());
     }
 
     /**
@@ -250,7 +240,7 @@ class meeting {
         $meetinginfo->statusrunning = false;
         $meetinginfo->createtime = null;
 
-        $info = self::retrieve_cached_meeting_info($this->instance, $updatecache);
+        $info = self::retrieve_cached_meeting_info($this->instance->get_meeting_id(), $updatecache);
         if (!empty($info)) {
             $meetinginfo->statusrunning = $info['running'] === 'true';
             $meetinginfo->createtime = $info['createTime'] ?? null;
@@ -286,7 +276,7 @@ class meeting {
         }
         $meetinginfo->attendees = [];
         if (!empty($info['attendees'])) {
-            // Ensure each returned attendee is cast to an array, rather than a simpleXML object.
+            // Make sure attendees is an array of object, not a simpleXML object.
             foreach ($info['attendees'] as $attendee) {
                 $meetinginfo->attendees[] = (array) $attendee;
             }
@@ -332,13 +322,12 @@ class meeting {
     /**
      * Gets a meeting info object cached or fetched from the live session.
      *
-     * @param instance $instance
+     * @param string $meetingid
      * @param bool $updatecache
      *
      * @return array
      */
-    protected static function retrieve_cached_meeting_info(instance $instance, $updatecache = false) {
-        $meetingid = $instance->get_meeting_id();
+    protected static function retrieve_cached_meeting_info($meetingid, $updatecache = false) {
         $cachettl = (int) config::get('waitformoderator_cache_ttl');
         $cache = cache::make_from_params(cache_store::MODE_APPLICATION, 'mod_bigbluebuttonbn', 'meetings_cache');
         $result = $cache->get($meetingid);

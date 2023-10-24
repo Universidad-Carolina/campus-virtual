@@ -59,14 +59,13 @@ Feature: The my overview block allows users to hide their courses
     And I click on "Removed from view" "link" in the "Course overview" "block"
     And I click on ".coursemenubtn" "css_element" in the "//div[@class='card dashboard-card' and contains(.,'Course 2')]" "xpath_element"
     And I click on "Restore to view" "link" in the "//div[@class='card dashboard-card' and contains(.,'Course 2')]" "xpath_element"
-    And I reload the page
     And I should not see "Course 2" in the "Course overview" "block"
     And I click on "Removed from view" "button" in the "Course overview" "block"
     When I click on "All" "link" in the "Course overview" "block"
     And I reload the page
     Then I should see "Course 2" in the "Course overview" "block"
 
-  Scenario: Test star and unstar functionality
+  Scenario: Test show toggle functionality w/ favorites
     Given I am on the "My courses" page logged in as "student1"
     And I click on "All" "button" in the "Course overview" "block"
     And I click on "All" "link" in the "Course overview" "block"

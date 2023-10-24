@@ -123,28 +123,23 @@ class visibility {
      * @param string $groupsalias The SQL alias being used for the groups table.
      * @param string $groupsmembersalias The SQL alias being used for the groups_members table.
      * @param string $useralias The SQL alias being used for the user table.
-     * @param string $paramprefix Prefix for the parameter names.
      * @return array [$where, $params]
      */
-    public static function sql_member_visibility_where(
-        string $groupsalias = 'g',
-        string $groupsmembersalias = 'gm',
-        string $useralias = 'u',
-        string $paramprefix = '',
-    ): array {
+    public static function sql_member_visibility_where(string $groupsalias = 'g',
+            string $groupsmembersalias = 'gm', string $useralias = 'u'): array {
         global $USER;
 
-        list($memberssql, $membersparams) = self::sql_members_visibility_condition($groupsalias, $groupsmembersalias, $paramprefix);
+        list($memberssql, $membersparams) = self::sql_members_visibility_condition($groupsalias, $groupsmembersalias);
 
-        $where = "(
-            {$groupsalias}.visibility = :{$paramprefix}all
-            OR ($memberssql)
-            OR ({$groupsalias}.visibility = :{$paramprefix}own AND {$useralias}.id = :{$paramprefix}currentuser2)
-        )";
+        $where = " AND (
+                        {$groupsalias}.visibility = :all
+                        OR ($memberssql)
+                        OR ({$groupsalias}.visibility = :own AND {$useralias}.id = :currentuser2)
+                    )";
         $params = [
-            "{$paramprefix}all" => GROUPS_VISIBILITY_ALL,
-            "{$paramprefix}own" => GROUPS_VISIBILITY_OWN,
-            "{$paramprefix}currentuser2" => $USER->id,
+            'all' => GROUPS_VISIBILITY_ALL,
+            'own' => GROUPS_VISIBILITY_OWN,
+            'currentuser2' => $USER->id,
         ];
         $params = array_merge($params, $membersparams);
         return [$where, $params];
@@ -155,25 +150,21 @@ class visibility {
      *
      * @param string $groupsalias The SQL alias being used for the groups table.
      * @param string $groupsmembersalias The SQL alias being used for the groups_members table.
-     * @param string $paramprefix Prefix for the parameter names.
      * @return array [$sql, $params]
      */
-    protected static function sql_members_visibility_condition(
-        string $groupsalias = 'g',
-        string $groupsmembersalias = 'gm',
-        string $paramprefix = '',
-    ): array {
+    protected static function sql_members_visibility_condition(string $groupsalias = 'g',
+            string $groupsmembersalias = 'gm'): array {
         global $USER;
-        $sql = "{$groupsalias}.visibility = :{$paramprefix}members
+        $sql = "{$groupsalias}.visibility = :members
                     AND (
                         SELECT gm2.id
                           FROM {groups_members} gm2
                          WHERE gm2.groupid = {$groupsmembersalias}.groupid
-                               AND gm2.userid = :{$paramprefix}currentuser
+                               AND gm2.userid = :currentuser
                     ) IS NOT NULL";
         $params = [
-            "{$paramprefix}members" => GROUPS_VISIBILITY_MEMBERS,
-            "{$paramprefix}currentuser" => $USER->id
+            'members' => GROUPS_VISIBILITY_MEMBERS,
+            'currentuser' => $USER->id
         ];
 
         return [$sql, $params];

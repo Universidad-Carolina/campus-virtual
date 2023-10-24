@@ -23,7 +23,6 @@ use lang_string;
 use moodle_url;
 use pix_icon;
 use stdClass;
-use core\reportbuilder\local\entities\context;
 use core_reportbuilder\system_report;
 use core_reportbuilder\local\entities\user;
 use core_reportbuilder\local\report\action;
@@ -54,13 +53,6 @@ class comments extends system_report {
             return [$row->id, get_string('select')];
         });
 
-        // Join the context entity.
-        $contextentity = (new context())
-            ->set_table_alias('context', $commententity->get_table_alias('context'));
-        $this->add_entity($contextentity
-            ->add_join($commententity->get_context_join())
-        );
-
         // Join the user entity to the comment userid (author).
         $userentity = new user();
         $useralias = $userentity->get_table_alias('user');
@@ -90,7 +82,7 @@ class comments extends system_report {
         $this->add_columns_from_entities([
             'user:fullnamewithlink',
             'comment:content',
-            'context:link',
+            'comment:contexturl',
             'comment:timecreated',
         ]);
 

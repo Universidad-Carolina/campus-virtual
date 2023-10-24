@@ -26,13 +26,11 @@
  */
 
 import {BaseComponent} from 'core/reactive';
-import Modal from 'core/modal';
-import ModalSaveCancel from 'core/modal_save_cancel';
-import ModalDeleteCancel from 'core/modal_delete_cancel';
+import ModalFactory from 'core/modal_factory';
 import ModalEvents from 'core/modal_events';
 import Templates from 'core/templates';
 import {prefetchStrings} from 'core/prefetch';
-import {getString} from 'core/str';
+import {get_string as getString} from 'core/str';
 import {getFirst} from 'core/normalise';
 import {toggleBulkSelectionAction} from 'core_courseformat/local/content/actions/bulkselection';
 import * as CourseEvents from 'core_course/events';
@@ -55,9 +53,6 @@ const directMutations = {
     cmStealth: 'cmStealth',
     cmMoveRight: 'cmMoveRight',
     cmMoveLeft: 'cmMoveLeft',
-    cmNoGroups: 'cmNoGroups',
-    cmSeparateGroups: 'cmSeparateGroups',
-    cmVisibleGroups: 'cmVisibleGroups',
 };
 
 export default class extends BaseComponent {
@@ -85,8 +80,7 @@ export default class extends BaseComponent {
         };
         // Component css classes.
         this.classes = {
-            DISABLED: `text-body`,
-            ITALIC: `font-italic`,
+            DISABLED: `disabled`,
         };
     }
 
@@ -249,12 +243,14 @@ export default class extends BaseComponent {
         }
 
 
-        // Create the modal.
         // Build the modal parameters from the event data.
-        const modal = await this._modalBodyRenderedPromise(Modal, {
+        const modalParams = {
             title: titleText,
             body: Templates.render('core_courseformat/local/content/movesection', data),
-        });
+        };
+
+        // Create the modal.
+        const modal = await this._modalBodyRenderedPromise(modalParams);
 
         const modalBody = getFirst(modal.getBody());
 
@@ -328,12 +324,14 @@ export default class extends BaseComponent {
             titleText = this.reactive.getFormatString('cmsmove_title');
         }
 
-        // Create the modal.
         // Build the modal parameters from the event data.
-        const modal = await this._modalBodyRenderedPromise(Modal, {
+        const modalParams = {
             title: titleText,
             body: Templates.render('core_courseformat/local/content/movecm', data),
-        });
+        };
+
+        // Create the modal.
+        const modal = await this._modalBodyRenderedPromise(modalParams);
 
         const modalBody = getFirst(modal.getBody());
 
@@ -444,10 +442,13 @@ export default class extends BaseComponent {
             bodyText = this.reactive.getFormatString('sectionsdelete_info', {count: sectionIds.length});
         }
 
-        const modal = await this._modalBodyRenderedPromise(ModalDeleteCancel, {
+        const modalParams = {
             title: titleText,
             body: bodyText,
-        });
+            type: ModalFactory.types.DELETE_CANCEL,
+        };
+
+        const modal = await this._modalBodyRenderedPromise(modalParams);
 
         modal.getRoot().on(
             ModalEvents.delete,
@@ -488,16 +489,11 @@ export default class extends BaseComponent {
      * @param {string} mutationName the mutation name
      */
     async _requestMutationAction(target, event, mutationName) {
-        if (!target.dataset.id && target.dataset.for !== 'bulkaction') {
+        if (!target.dataset.id) {
             return;
         }
         event.preventDefault();
-        if (target.dataset.for === 'bulkaction') {
-            // If the mutation is a bulk action we use the current selection.
-            this.reactive.dispatch(mutationName, this.reactive.get('bulk').selection);
-        } else {
-            this.reactive.dispatch(mutationName, [target.dataset.id]);
-        }
+        this.reactive.dispatch(mutationName, [target.dataset.id]);
     }
 
     /**
@@ -552,10 +548,13 @@ export default class extends BaseComponent {
             );
         }
 
-        const modal = await this._modalBodyRenderedPromise(ModalDeleteCancel, {
+        const modalParams = {
             title: titleText,
             body: bodyText,
-        });
+            type: ModalFactory.types.DELETE_CANCEL,
+        };
+
+        const modal = await this._modalBodyRenderedPromise(modalParams);
 
         modal.getRoot().on(
             ModalEvents.delete,
@@ -583,11 +582,13 @@ export default class extends BaseComponent {
         const data = {
             allowstealth: exporter.canUseStealth(this.reactive.state, cmIds),
         };
-        const modal = await this._modalBodyRenderedPromise(ModalSaveCancel, {
+        const modalParams = {
             title: getString('availability', 'core'),
             body: Templates.render('core_courseformat/local/content/cm/availabilitymodal', data),
             saveButtonText: getString('apply', 'core'),
-        });
+            type: ModalFactory.types.SAVE_CANCEL,
+        };
+        const modal = await this._modalBodyRenderedPromise(modalParams);
 
         this._setupMutationRadioButtonModal(modal, cmIds);
     }
@@ -604,11 +605,13 @@ export default class extends BaseComponent {
         }
         const title = (sectionIds.length == 1) ? 'sectionavailability_title' : 'sectionsavailability_title';
         // Show the availability modal to decide which action to trigger.
-        const modal = await this._modalBodyRenderedPromise(ModalSaveCancel, {
+        const modalParams = {
             title: this.reactive.getFormatString(title),
             body: Templates.render('core_courseformat/local/content/section/availabilitymodal', []),
             saveButtonText: getString('apply', 'core'),
-        });
+            type: ModalFactory.types.SAVE_CANCEL,
+        };
+        const modal = await this._modalBodyRenderedPromise(modalParams);
 
         this._setupMutationRadioButtonModal(modal, sectionIds);
     }
@@ -667,7 +670,6 @@ export default class extends BaseComponent {
         const targets = this.getElements(this.selectors.ADDSECTION);
         targets.forEach(element => {
             element.classList.toggle(this.classes.DISABLED, locked);
-            element.classList.toggle(this.classes.ITALIC, locked);
             this.setElementLocked(element, locked);
         });
     }
@@ -682,7 +684,6 @@ export default class extends BaseComponent {
             element.style.pointerEvents = 'none';
             element.style.userSelect = 'none';
             element.classList.add(this.classes.DISABLED);
-            element.classList.add(this.classes.ITALIC);
             element.setAttribute('aria-disabled', true);
             element.addEventListener('click', event => event.preventDefault());
         }
@@ -691,13 +692,12 @@ export default class extends BaseComponent {
     /**
      * Render a modal and return a body ready promise.
      *
-     * @param {Modal} ModalClass the modal class
      * @param {object} modalParams the modal params
      * @return {Promise} the modal body ready promise
      */
-    _modalBodyRenderedPromise(ModalClass, modalParams) {
+    _modalBodyRenderedPromise(modalParams) {
         return new Promise((resolve, reject) => {
-            ModalClass.create(modalParams).then((modal) => {
+            ModalFactory.create(modalParams).then((modal) => {
                 modal.setRemoveOnClose(true);
                 // Handle body loading event.
                 modal.getRoot().on(ModalEvents.bodyRendered, () => {

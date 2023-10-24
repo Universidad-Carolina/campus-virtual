@@ -49,15 +49,6 @@ if (!debugging('', DEBUG_DEVELOPER)) {
     exit;
 }
 
-// Finish page.
-echo $OUTPUT->footer();
-echo $OUTPUT->select_element_for_append();
-
-// Preemptively reset the navcache before closing, so it remains the same on shutdown.
-navigation_cache::destroy_volatile_caches();
-
-\core\session\manager::write_close();
-
 // Set up the form.
 $mform = new tool_generator_make_course_form('maketestcourse.php');
 if ($data = $mform->get_data()) {
@@ -84,3 +75,5 @@ if ($data = $mform->get_data()) {
     $mform->display();
 }
 
+// Finish page.
+echo $OUTPUT->footer();

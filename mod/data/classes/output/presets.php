@@ -90,7 +90,7 @@ class presets implements templatable, renderable {
      */
     private function get_presets(renderer_base $output): array {
         $presets = [];
-        foreach ($this->presets as $index => $preset) {
+        foreach ($this->presets as $preset) {
             $presetname = $preset->name;
             $userid = $preset instanceof preset ? $preset->get_userid() : $preset->userid;
             if (!empty($userid)) {
@@ -120,7 +120,6 @@ class presets implements templatable, renderable {
                 'description' => $preset->description,
                 'userid' => $userid,
                 'actions' => $actions,
-                'presetindex' => $index,
             ];
         }
 

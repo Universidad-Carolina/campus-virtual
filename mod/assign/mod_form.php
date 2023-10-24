@@ -241,8 +241,8 @@ class mod_assign_mod_form extends moodleform_mod {
         $errors = parent::validation($data, $files);
 
         if (!empty($data['allowsubmissionsfromdate']) && !empty($data['duedate'])) {
-            if ($data['duedate'] <= $data['allowsubmissionsfromdate']) {
-                $errors['duedate'] = get_string('duedateaftersubmissionvalidation', 'assign');
+            if ($data['duedate'] < $data['allowsubmissionsfromdate']) {
+                $errors['duedate'] = get_string('duedatevalidation', 'assign');
             }
         }
         if (!empty($data['cutoffdate']) && !empty($data['duedate'])) {
@@ -319,13 +319,10 @@ class mod_assign_mod_form extends moodleform_mod {
     public function add_completion_rules() {
         $mform =& $this->_form;
 
-        $suffix = $this->get_suffix();
-        $completionsubmitel = 'completionsubmit' . $suffix;
-        $mform->addElement('advcheckbox', $completionsubmitel, '', get_string('completionsubmit', 'assign'));
+        $mform->addElement('advcheckbox', 'completionsubmit', '', get_string('completionsubmit', 'assign'));
         // Enable this completion rule by default.
-        $mform->setDefault($completionsubmitel, 1);
-
-        return [$completionsubmitel];
+        $mform->setDefault('completionsubmit', 1);
+        return array('completionsubmit');
     }
 
     /**
@@ -335,8 +332,7 @@ class mod_assign_mod_form extends moodleform_mod {
      * @return bool
      */
     public function completion_rule_enabled($data) {
-        $suffix = $this->get_suffix();
-        return !empty($data['completionsubmit' . $suffix]);
+        return !empty($data['completionsubmit']);
     }
 
 }

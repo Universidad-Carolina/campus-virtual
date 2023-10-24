@@ -80,6 +80,9 @@ final class WorksheetManager implements WorksheetManagerInterface
         return $this->sharedStringsManager;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function startSheet(Worksheet $worksheet): void
     {
         $sheetFilePointer = fopen($worksheet->getFilePath(), 'w');
@@ -89,6 +92,9 @@ final class WorksheetManager implements WorksheetManagerInterface
         $this->commentsManager->createWorksheetCommentFiles($worksheet);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function addRow(Worksheet $worksheet, Row $row): void
     {
         if (!$row->isEmpty()) {
@@ -99,6 +105,9 @@ final class WorksheetManager implements WorksheetManagerInterface
         $worksheet->setLastWrittenRowIndex($worksheet->getLastWrittenRowIndex() + 1);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function close(Worksheet $worksheet): void
     {
         $this->commentsManager->closeWorksheetCommentFiles($worksheet);

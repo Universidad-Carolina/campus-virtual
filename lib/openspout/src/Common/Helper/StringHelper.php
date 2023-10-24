@@ -33,7 +33,8 @@ final class StringHelper
     {
         return $this->hasMbstringSupport
             ? mb_strlen($string)
-            : \strlen($string); // @codeCoverageIgnore
+            : \strlen($string) // @codeCoverageIgnore
+        ;
     }
 
     /**
@@ -52,7 +53,8 @@ final class StringHelper
     {
         $position = $this->hasMbstringSupport
             ? mb_strpos($string, $char)
-            : strpos($string, $char); // @codeCoverageIgnore
+            : strpos($string, $char) // @codeCoverageIgnore
+        ;
 
         return (false !== $position) ? $position : -1;
     }
@@ -73,7 +75,8 @@ final class StringHelper
     {
         $position = $this->hasMbstringSupport
             ? mb_strrpos($string, $char)
-            : strrpos($string, $char); // @codeCoverageIgnore
+            : strrpos($string, $char) // @codeCoverageIgnore
+        ;
 
         return (false !== $position) ? $position : -1;
     }

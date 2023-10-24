@@ -238,8 +238,6 @@ abstract class attempts_report extends report_base {
         $table->column_class('lastname', 'bold');
         $table->column_class('firstname', 'bold');
         $table->column_class('fullname', 'bold');
-
-        $table->column_sticky('fullname');
     }
 
     /**

@@ -64,15 +64,15 @@ class cache_item {
         global $CFG, $USER;
         $this->key = $key;
         // Set the directory for cache.
-        $dir = $CFG->cachedir . '/' . $module . '/';
-        if (file_exists($dir)) {
+        $this->dir = $CFG->cachedir . '/' . $module . '/';
+        if (file_exists($this->dir)) {
             $filename = 'u' . $USER->id . '_' . md5(serialize($key));
             // If the cache fine exists, set the value from the cache file.
-            if (file_exists($dir . $filename)) {
+            if (file_exists($this->dir . $filename)) {
                 $this->ishit = true;
                 $this->expires_after($ttl);
-                $fp = fopen($dir . $filename, 'rb');
-                $size = filesize($dir . $filename);
+                $fp = fopen($this->dir . $filename, 'rb');
+                $size = filesize($this->dir . $filename);
                 $content = fread($fp, $size);
                 $this->value = unserialize($content);
             }

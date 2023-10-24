@@ -181,7 +181,7 @@ class auth_plugin_lti extends \auth_plugin_base {
         unset($member['picture']);
 
         if ($binduser = $this->get_user_binding($iss, $member['user_id'])) {
-            $user = \core_user::get_user($binduser);
+            $user = \core_user::get_user((int) $binduser);
             $this->update_user_account($user, $member, $iss);
             return \core_user::get_user($user->id);
         } else {
@@ -199,6 +199,7 @@ class auth_plugin_lti extends \auth_plugin_base {
                 }
             }
             $user = $this->create_new_account($member, $iss);
+            $this->update_user_account($user, $member, $iss);
             return \core_user::get_user($user->id);
         }
     }
@@ -223,7 +224,7 @@ class auth_plugin_lti extends \auth_plugin_base {
         }
 
         if ($binduser = $this->get_user_binding($launchdata['iss'], $launchdata['sub'])) {
-            $user = \core_user::get_user($binduser);
+            $user = \core_user::get_user((int) $binduser);
             $this->update_user_account($user, $launchdata, $launchdata['iss']);
             return \core_user::get_user($user->id);
         } else {
@@ -380,11 +381,7 @@ class auth_plugin_lti extends \auth_plugin_base {
             'lastname' => $userdata['family_name'] ?? $iss,
             'email' => $email
         ];
-        $userfieldstocompare = array_intersect_key((array) $user, $update);
-
-        if (!empty(array_diff($update, $userfieldstocompare))) {
-            user_update_user($update); // Only update if there's a change.
-        }
+        user_update_user($update);
 
         if (!empty($userdata['picture'])) {
             try {

@@ -17,9 +17,11 @@ Feature: Users can request and approve courses
       | user2 | Acceptance test site | manager |
     And the following config values are set as admin:
       | lockrequestcategory | 1 |
-    And the following "role capability" exists:
-      | role                  | user  |
-      | moodle/course:request | allow |
+    Given I log in as "admin"
+    And I set the following system permissions of "Authenticated user" role:
+      | capability | permission |
+      | moodle/course:request | Allow |
+    And I log out
     When I log in as "user1"
     And I am on course index
     And I click on "More actions" "button"
@@ -69,9 +71,11 @@ Feature: Users can request and approve courses
       | user1 | courserequestor | Category     | ENG       |
       | user2 | manager         | Category     | SCI       |
       | user3 | manager         | Category     | ENG       |
-    And the following "role capability" exists:
-      | role                  | courserequestor |
-      | moodle/course:request | allow           |
+    Given I log in as "admin"
+    And I set the following system permissions of "Course requestor" role:
+      | capability            | permission |
+      | moodle/course:request | Allow      |
+    And I log out
     And I log in as "user1"
     And I am on course index
     And I follow "English category"

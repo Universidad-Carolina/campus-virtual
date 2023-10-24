@@ -35,16 +35,14 @@ class external_multiple_structure extends external_description {
      * @param string $desc
      * @param int $required
      * @param array $default
-     * @param bool $allownull
      */
     public function __construct(
         external_description $content,
         $desc = '',
         $required = VALUE_REQUIRED,
-        $default = null,
-        $allownull = NULL_NOT_ALLOWED
+        $default = null
     ) {
-        parent::__construct($desc, $required, $default, $allownull);
+        parent::__construct($desc, $required, $default);
         $this->content = $content;
     }
 }

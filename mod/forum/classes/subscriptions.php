@@ -176,32 +176,11 @@ class subscriptions {
      *
      * @param \stdClass $forum The record of the forum to set
      * @param int $status The new subscription state
-     * @return bool true
-     * @throws dml_exception A DML specific exception is thrown for any errors.
+     * @return bool
      */
-    public static function set_subscription_mode($forum, $status = FORUM_FORCESUBSCRIBE): bool {
+    public static function set_subscription_mode($forumid, $status = 1) {
         global $DB;
-
-        if (is_numeric($forum)) {
-            debugging(__METHOD__.': Argument #1 ($forum) must be a stdClass record of a forum', DEBUG_DEVELOPER);
-
-            $forum = $DB->get_record("forum", ["id" => $forum], '*', MUST_EXIST);
-        }
-
-        $DB->set_field("forum", "forcesubscribe", $status, ["id" => $forum->id]);
-
-        if ($forum->forcesubscribe != $status) {
-            // Trigger event if subscription mode has been changed.
-            $event = \mod_forum\event\subscription_mode_updated::create([
-                "context" => forum_get_context($forum->id),
-                "objectid" => $forum->id,
-                "other" => ["oldvalue" => $forum->forcesubscribe, "newvalue" => $status],
-            ]);
-            $event->add_record_snapshot("forum", $forum);
-            $event->trigger();
-        }
-
-        return true;
+        return $DB->set_field("forum", "forcesubscribe", $status, array("id" => $forumid));
     }
 
     /**

@@ -21,11 +21,11 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 import * as Repository from 'gradereport_grader/collapse/repository';
-import search_combobox from 'core/comboboxsearch/search_combobox';
+import GradebookSearchClass from 'gradereport_grader/search/search_class';
 import {renderForPromise, replaceNodeContents, replaceNode} from 'core/templates';
 import {debounce} from 'core/utils';
 import $ from 'jquery';
-import {getStrings} from 'core/str';
+import {get_strings as getStrings} from 'core/str';
 import CustomEvents from "core/custom_interaction_events";
 import storage from 'core/localstorage';
 import {addIconToContainer} from 'core/loadingicon';
@@ -39,8 +39,7 @@ const selectors = {
     formItems: {
         cancel: 'cancel',
         save: 'save',
-        checked: 'input[type="checkbox"]:checked',
-        currentlyUnchecked: 'input[type="checkbox"]:not([data-action="selectall"])',
+        checked: 'input[type="checkbox"]:checked'
     },
     hider: 'hide',
     expand: 'expand',
@@ -60,7 +59,7 @@ const selectors = {
 
 const countIndicator = document.querySelector(selectors.count);
 
-export default class ColumnSearch extends search_combobox {
+export default class ColumnSearch extends GradebookSearchClass {
 
     userID = -1;
     courseID = null;
@@ -105,7 +104,7 @@ export default class ColumnSearch extends search_combobox {
      *
      * @returns {string}
      */
-    componentSelector() {
+    setComponentSelector() {
         return '.collapse-columns';
     }
 
@@ -114,7 +113,7 @@ export default class ColumnSearch extends search_combobox {
      *
      * @returns {string}
      */
-    dropdownSelector() {
+    setDropdownSelector() {
         return '.searchresultitemscontainer';
     }
 
@@ -123,7 +122,7 @@ export default class ColumnSearch extends search_combobox {
      *
      * @returns {string}
      */
-    triggerSelector() {
+    setTriggerSelector() {
         return '.collapsecolumn';
     }
 
@@ -198,7 +197,7 @@ export default class ColumnSearch extends search_combobox {
             if (idx === -1) {
                 this.getDataset().push(desiredToHide);
             }
-            await this.prefcountpipe();
+            await this.prefcountpippe();
 
             this.nodesUpdate(desiredToHide);
         }
@@ -211,7 +210,7 @@ export default class ColumnSearch extends search_combobox {
             const idx = this.getDataset().indexOf(desiredToHide);
             this.getDataset().splice(idx, 1);
 
-            await this.prefcountpipe();
+            await this.prefcountpippe();
 
             this.nodesUpdate(e.target.closest(selectors.colVal)?.dataset.col);
             this.nodesUpdate(e.target.closest(selectors.colVal)?.dataset.itemid);
@@ -269,20 +268,13 @@ export default class ColumnSearch extends search_combobox {
         ];
         CustomEvents.define(document, events);
 
-        const selectall = form.querySelector('[data-action="selectall"]');
-
         // Register clicks & keyboard form handling.
         events.forEach((event) => {
-            const submitBtn = form.querySelector(`[data-action="${selectors.formItems.save}"`);
             form.addEventListener(event, (e) => {
                 // Stop Bootstrap from being clever.
                 e.stopPropagation();
-                const input = e.target.closest('input');
-                if (input) {
-                    // If the user is unchecking an item, we need to uncheck the select all if it's checked.
-                    if (selectall.checked && !input.checked) {
-                        selectall.checked = false;
-                    }
+                const submitBtn = form.querySelector(`[data-action="${selectors.formItems.save}"`);
+                if (e.target.closest('input')) {
                     const checkedCount = Array.from(form.querySelectorAll(selectors.formItems.checked)).length;
                     // Check if any are clicked or not then change disabled.
                     submitBtn.disabled = checkedCount <= 0;
@@ -296,23 +288,6 @@ export default class ColumnSearch extends search_combobox {
                 this.searchInput.value = '';
                 this.setSearchTerms(this.searchInput.value);
                 await this.filterrenderpipe();
-            });
-            selectall.addEventListener(event, (e) => {
-                // Stop Bootstrap from being clever.
-                e.stopPropagation();
-                if (!selectall.checked) {
-                    const touncheck = Array.from(form.querySelectorAll(selectors.formItems.checked));
-                    touncheck.forEach(item => {
-                        item.checked = false;
-                    });
-                    submitBtn.disabled = true;
-                } else {
-                    const currentUnchecked = Array.from(form.querySelectorAll(selectors.formItems.currentlyUnchecked));
-                    currentUnchecked.forEach(item => {
-                        item.checked = true;
-                    });
-                    submitBtn.disabled = false;
-                }
             });
         });
 
@@ -329,10 +304,7 @@ export default class ColumnSearch extends search_combobox {
                 this.getDataset().splice(idx, 1);
                 this.nodesUpdate(item.dataset.collapse);
             });
-            // Reset the check all & submit to false just in case.
-            selectall.checked = false;
-            e.submitter.disabled = true;
-            await this.prefcountpipe();
+            await this.prefcountpippe();
         });
     }
 
@@ -348,7 +320,7 @@ export default class ColumnSearch extends search_combobox {
      *
      * @returns {Promise<void>}
      */
-    async prefcountpipe() {
+    async prefcountpippe() {
         this.setPreferences();
         this.countUpdate();
         await this.filterrenderpipe();
@@ -401,6 +373,18 @@ export default class ColumnSearch extends search_combobox {
                 };
             })
         );
+    }
+
+    /**
+     * Update any changeable nodes, filter and then render the result.
+     *
+     * @returns {Promise<void>}
+     */
+    async filterrenderpipe() {
+        this.updateNodes();
+        this.setMatchedResults(await this.filterDataset(this.getDataset()));
+        this.filterMatchDataset();
+        await this.renderDropdown();
     }
 
     /**
@@ -503,20 +487,17 @@ export default class ColumnSearch extends search_combobox {
      * Build the content then replace the node.
      */
     async renderDropdown() {
-        const form = this.component.querySelector(selectors.formDropdown);
-        const selectall = form.querySelector('[data-action="selectall"]');
         const {html, js} = await renderForPromise('gradereport_grader/collapse/collapseresults', {
             'results': this.getMatchedResults(),
             'searchTerm': this.getSearchTerm(),
         });
-        selectall.disabled = this.getMatchedResults().length === 0;
         replaceNodeContents(this.getHTMLElements().searchDropdown, html, js);
     }
 
     /**
      * If we have any custom user profile fields, grab their system & readable names to add to our string map.
      *
-     * @returns {array<string,*>} An array of associated string arrays ready for our map.
+     * @returns {[string,*][]} An array of associated string arrays ready for our map.
      */
     fetchCustomFieldValues() {
         const customFields = document.querySelectorAll('[data-collapse-name]');

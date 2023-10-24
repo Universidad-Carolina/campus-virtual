@@ -125,7 +125,7 @@ class bigbluebutton_proxy extends proxy_base {
                 $data['avatarURL'] = self::get_avatar_url($user)->out(false);
             }
         }
-        return self::action_url('join', $data, [], $instance->get_instance_id());
+        return self::action_url('join', $data);
     }
 
     /**
@@ -464,7 +464,6 @@ class bigbluebutton_proxy extends proxy_base {
      * @param array $metadata
      * @param string|null $presentationname
      * @param string|null $presentationurl
-     * @param int|null $instanceid
      * @return array
      * @throws bigbluebutton_exception
      */
@@ -472,10 +471,9 @@ class bigbluebutton_proxy extends proxy_base {
         array $data,
         array $metadata,
         ?string $presentationname = null,
-        ?string $presentationurl = null,
-        ?int $instanceid = null
+        ?string $presentationurl = null
     ): array {
-        $createmeetingurl = self::action_url('create', $data, $metadata, $instanceid);
+        $createmeetingurl = self::action_url('create', $data, $metadata);
 
         $curl = new curl();
         if (!is_null($presentationname) && !is_null($presentationurl)) {
@@ -509,11 +507,10 @@ class bigbluebutton_proxy extends proxy_base {
      * Get meeting info for a given meeting id
      *
      * @param string $meetingid
-     * @param int|null $instanceid
      * @return array
      */
-    public static function get_meeting_info(string $meetingid, ?int $instanceid = null): array {
-        $xmlinfo = self::fetch_endpoint_xml('getMeetingInfo', ['meetingID' => $meetingid], [], $instanceid);
+    public static function get_meeting_info(string $meetingid): array {
+        $xmlinfo = self::fetch_endpoint_xml('getMeetingInfo', ['meetingID' => $meetingid]);
         self::assert_returned_xml($xmlinfo, ['meetingid' => $meetingid]);
         return (array) $xmlinfo;
     }
@@ -523,10 +520,9 @@ class bigbluebutton_proxy extends proxy_base {
      *
      * @param string $meetingid
      * @param string $modpw
-     * @param int|null $instanceid
      */
-    public static function end_meeting(string $meetingid, string $modpw, ?int $instanceid = null): void {
-        $xml = self::fetch_endpoint_xml('end', ['meetingID' => $meetingid, 'password' => $modpw], [], $instanceid);
+    public static function end_meeting(string $meetingid, string $modpw): void {
+        $xml = self::fetch_endpoint_xml('end', ['meetingID' => $meetingid, 'password' => $modpw]);
         self::assert_returned_xml($xml, ['meetingid' => $meetingid]);
     }
 

@@ -59,15 +59,8 @@ class index implements renderable {
     public function get_table(renderer_base $output): html_table {
         // Print the list of instances.
         $table = new html_table();
-
-        if (course_format_uses_sections($this->course->format)) {
-            $sectionheading = get_string('sectionname', "format_{$this->course->format}");
-        } else {
-            $sectionheading = '';
-        }
-
         $table->head = [
-            $sectionheading,
+            get_string('week'),
             get_string('index_heading_name', plugin::COMPONENT),
             get_string('index_heading_group', plugin::COMPONENT),
             get_string('index_heading_users', plugin::COMPONENT),
@@ -125,12 +118,6 @@ class index implements renderable {
         }
         $meeting = new meeting($instance);
 
-        if (course_format_uses_sections($this->course->format)) {
-            $sectionname = get_section_name($this->course, $instance->get_cm()->sectionnum);
-        } else {
-            $sectionname = '';
-        }
-
         $viewurl = $instance->get_view_url();
         if ($groupid = $instance->get_group_id()) {
             $viewurl->param('group', $groupid);
@@ -141,7 +128,7 @@ class index implements renderable {
         // The meeting info was returned.
         if ($meeting->is_running()) {
             return [
-                $sectionname,
+                $instance->get_cm()->sectionnum,
                 $joinurl,
                 $instance->get_group_name(),
                 $this->get_room_usercount($meeting),
@@ -152,7 +139,7 @@ class index implements renderable {
             ];
         }
 
-        return [$sectionname, $joinurl, $instance->get_group_name(), '', '', '', '', ''];
+        return [$instance->get_cm()->sectionnum, $joinurl, $instance->get_group_name(), '', '', '', '', ''];
     }
 
     /**
@@ -175,10 +162,9 @@ class index implements renderable {
     protected function get_room_attendee_list(meeting $meeting, string $role): string {
         $attendees = [];
 
-        // Iterate attendees, matching by their "role" property.
         foreach ($meeting->get_attendees() as $attendee) {
-            if (strcmp((string) $attendee['role'], $role) === 0) {
-                $attendees[] = $attendee['fullName'];
+            if ((string) $attendee->role == $role) {
+                $attendees[] = $attendee->fullName;
             }
         }
 

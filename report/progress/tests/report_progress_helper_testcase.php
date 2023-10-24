@@ -32,9 +32,6 @@ defined('MOODLE_INTERNAL') || die();
  */
 class report_progress_helper_testcase extends advanced_testcase {
 
-    /** @var testing_data_generator data generator.*/
-    protected $generator;
-
     /**
      * Set up testcase.
      */

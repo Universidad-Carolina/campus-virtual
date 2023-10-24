@@ -113,8 +113,7 @@ GLOBAL $gSQLMaxRows,$gSQLBlockRows,$ADODB_ROUND;
 				else
 					$v = round($v,$ADODB_ROUND);
 			case 'I':
-				$vv = $v ? stripslashes(trim($v)) : '';
-				$vv = $vv ?: '&nbsp;';
+				$vv = stripslashes((trim($v)));
 				if (strlen($vv) == 0) $vv .= '&nbsp;';
 				$s .= "	<TD align=right>".$vv ."</TD>\n";
 

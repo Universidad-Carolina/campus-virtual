@@ -34,21 +34,21 @@ require_once(__DIR__ . '/fixtures/testable_assign.php');
  */
 class base_test extends \advanced_testcase {
 
-    /** @var Default number of students to create */
+    /** @const Default number of students to create */
     const DEFAULT_STUDENT_COUNT = 3;
-    /** @var Default number of teachers to create */
+    /** @const Default number of teachers to create */
     const DEFAULT_TEACHER_COUNT = 2;
-    /** @var Default number of editing teachers to create */
+    /** @const Default number of editing teachers to create */
     const DEFAULT_EDITING_TEACHER_COUNT = 2;
-    /** @var Optional extra number of students to create */
+    /** @const Optional extra number of students to create */
     const EXTRA_STUDENT_COUNT = 40;
-    /** @var Optional number of suspended students */
+    /** @const Optional number of suspended students */
     const EXTRA_SUSPENDED_COUNT = 10;
-    /** @var Optional extra number of teachers to create */
+    /** @const Optional extra number of teachers to create */
     const EXTRA_TEACHER_COUNT = 5;
-    /** @var Optional extra number of editing teachers to create */
+    /** @const Optional extra number of editing teachers to create */
     const EXTRA_EDITING_TEACHER_COUNT = 5;
-    /** @var Number of groups to create */
+    /** @const Number of groups to create */
     const GROUP_COUNT = 6;
 
     /** @var \stdClass $course New course created to hold the assignments */

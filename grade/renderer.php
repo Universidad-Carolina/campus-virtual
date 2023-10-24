@@ -16,7 +16,6 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-use core\output\comboboxsearch;
 use \core_grades\output\action_bar;
 use core_message\helper;
 use core_message\api;
@@ -56,11 +55,6 @@ class core_grades_renderer extends plugin_renderer_base {
             return null;
         }
 
-        $sbody = $this->render_from_template('core_group/comboboxsearch/searchbody', [
-            'courseid' => $course->id,
-            'currentvalue' => optional_param('groupsearchvalue', '', PARAM_NOTAGS),
-        ]);
-
         $label = $groupmode == VISIBLEGROUPS ? get_string('selectgroupsvisible') :
             get_string('selectgroupsseparate');
 
@@ -89,15 +83,8 @@ class core_grades_renderer extends plugin_renderer_base {
             $data['selectedgroup'] = get_string('allparticipants');
         }
 
-        $groupdropdown = new comboboxsearch(
-            false,
-            $this->render_from_template('core_group/comboboxsearch/group_selector', $data),
-            $sbody,
-            'group-search',
-            'groupsearchwidget',
-            'groupsearchdropdown overflow-auto w-100',
-        );
-        return $this->render_from_template($groupdropdown->get_template(), $groupdropdown->export_for_template($this));
+        $this->page->requires->js_call_amd('core_grades/searchwidget/group', 'init');
+        return $this->render_from_template('core_grades/group_selector', $data);
     }
 
     /**
@@ -117,8 +104,6 @@ class core_grades_renderer extends plugin_renderer_base {
     ): stdClass {
         global $SESSION, $COURSE;
         // User search.
-        $searchvalue = optional_param('gpr_search', null, PARAM_NOTAGS);
-        $userid = optional_param('grp_userid', null, PARAM_INT);
         $url = new moodle_url($slug, ['id' => $course->id]);
         $firstinitial = $SESSION->gradereport["filterfirstname-{$context->id}"] ?? '';
         $lastinitial  = $SESSION->gradereport["filtersurname-{$context->id}"] ?? '';
@@ -135,7 +120,7 @@ class core_grades_renderer extends plugin_renderer_base {
             $currentfilter = get_string('filterlastactive', 'grades', ['last' => $lastinitial]);
         }
 
-        $this->page->requires->js_call_amd('core_grades/searchwidget/initials', 'init', [$slug, $userid, $searchvalue]);
+        $this->page->requires->js_call_amd('core_grades/searchwidget/initials', 'init', [$slug]);
 
         $formdata = (object) [
             'courseid' => $COURSE->id,

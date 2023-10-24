@@ -21,9 +21,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      3.1
  */
-define(['jquery', 'core/ajax', 'core/str', 'core/modal_save_cancel', 'core/modal_events', 'core/notification',
-        'core/custom_interaction_events', 'core/templates', 'core/pending'],
-    function($, Ajax, Str, ModalSaveCancel, ModalEvents, Notification, CustomEvents, Templates, Pending) {
+define(['jquery', 'core/ajax', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/notification',
+        'core/custom_interaction_events', 'core/templates'],
+    function($, Ajax, Str, ModalFactory, ModalEvents, Notification, CustomEvents, Templates) {
 
         /**
          * @var {String} the full name of the current user.
@@ -56,7 +56,6 @@ define(['jquery', 'core/ajax', 'core/str', 'core/modal_save_cancel', 'core/modal
          * @private
          */
         var setOverride = function(override) {
-            const pendingPromise = new Pending('report_progress/compeletion_override/setOverride');
             // Generate a loading spinner while we're working.
             Templates.render('core/loading', {}).then(function(html) {
                 // Append the loading spinner to the trigger element.
@@ -93,10 +92,6 @@ define(['jquery', 'core/ajax', 'core/str', 'core/modal_save_cancel', 'core/modal
                 }).catch(Notification.exception);
 
                 return;
-            })
-            .then(() => {
-                pendingPromise.resolve();
-                return;
             }).catch(Notification.exception);
         };
 
@@ -131,11 +126,10 @@ define(['jquery', 'core/ajax', 'core/str', 'core/modal_save_cancel', 'core/modal
                 ]);
             }).then(function(strings) {
                 // Create a save/cancel modal.
-                return ModalSaveCancel.create({
+                return ModalFactory.create({
+                    type: ModalFactory.types.SAVE_CANCEL,
                     title: strings[0],
                     body: strings[1],
-                    show: true,
-                    removeOnClose: true,
                 });
             }).then(function(modal) {
                 // Now set up the handlers for the confirmation or cancellation of the modal, and show it.
@@ -145,7 +139,15 @@ define(['jquery', 'core/ajax', 'core/str', 'core/modal_save_cancel', 'core/modal
                     setOverride(override);
                 });
 
-                return modal;
+                // Confirming, closing, or cancelling will destroy the modal and return focus to the trigger element.
+                modal.getRoot().on(ModalEvents.hidden, function() {
+                    triggerElement.focus();
+                    modal.destroy();
+                });
+
+                // Display.
+                modal.show();
+                return;
             }).catch(Notification.exception);
         };
 

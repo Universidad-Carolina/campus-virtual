@@ -44,14 +44,6 @@ class pgsql_native_moodle_database extends moodle_database {
         query_end as read_slave_query_end;
     }
 
-    /** @var array $sslmodes */
-    private static $sslmodes = [
-        'disable',
-        'prefer',
-        'require',
-        'verify-full'
-    ];
-
     /** @var array $serverinfo cache */
     private $serverinfo = [];
 
@@ -138,7 +130,6 @@ class pgsql_native_moodle_database extends moodle_database {
      * @param mixed $prefix string means moodle db prefix, false used for external databases where prefix not used
      * @param array $dboptions driver specific options
      * @return bool true
-     * @throws moodle_exception
      * @throws dml_connection_exception if error
      */
     public function raw_connect(string $dbhost, string $dbuser, string $dbpass, string $dbname, $prefix, array $dboptions=null): bool {
@@ -194,14 +185,6 @@ class pgsql_native_moodle_database extends moodle_database {
             }
 
             $connection .= " options='" . implode(' ', $options) . "'";
-        }
-
-        if (isset($this->dboptions['ssl'])) {
-            $sslmode = $this->dboptions['ssl'];
-            if (!in_array($sslmode, self::$sslmodes, true)) {
-                throw new moodle_exception('validateerrorlist', 'admin', '', "'dboptions''ssl': $sslmode");
-            }
-            $connection .= " sslmode=$sslmode";
         }
 
         ob_start();

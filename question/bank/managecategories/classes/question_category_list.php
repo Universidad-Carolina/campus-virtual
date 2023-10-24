@@ -19,7 +19,6 @@ namespace qbank_managecategories;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir. '/listlib.php');
-require_once($CFG->dirroot . '/question/editlib.php');
 
 use stdClass;
 use moodle_list;

@@ -28,8 +28,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use core_question\local\bank\question_version_status;
-use core_question\question_reference_manager;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -121,10 +119,6 @@ function questions_in_use($questionids): bool {
 
     // Are they used by the core question system?
     if (question_engine::questions_in_use($questionids)) {
-        return true;
-    }
-
-    if (question_reference_manager::questions_with_references($questionids)) {
         return true;
     }
 
@@ -352,12 +346,11 @@ function question_delete_question($questionid): void {
                    qv.version,
                    qbe.id as entryid,
                    qc.id as categoryid,
-                   ctx.id as contextid
+                   qc.contextid as contextid
               FROM {question} q
               LEFT JOIN {question_versions} qv ON qv.questionid = q.id
               LEFT JOIN {question_bank_entries} qbe ON qbe.id = qv.questionbankentryid
               LEFT JOIN {question_categories} qc ON qc.id = qbe.questioncategoryid
-              LEFT JOIN {context} ctx ON ctx.id = qc.contextid
              WHERE q.id = ?';
     $questiondata = $DB->get_record_sql($sql, [$question->id]);
 
@@ -367,10 +360,8 @@ function question_delete_question($questionid): void {
         $questionstocheck[] = $question->parent;
     }
 
-    // Do not delete a question if it is used by an activity module. Just mark the version hidden.
+    // Do not delete a question if it is used by an activity module
     if (questions_in_use($questionstocheck)) {
-        $DB->set_field('question_versions', 'status',
-                question_version_status::QUESTION_STATUS_HIDDEN, ['questionid' => $questionid]);
         return;
     }
 
@@ -390,6 +381,13 @@ function question_delete_question($questionid): void {
     // Delete questiontype-specific data.
     question_bank::get_qtype($question->qtype, false)->delete_question($question->id, $questiondata->contextid);
 
+    // Delete all tag instances.
+    core_tag_tag::remove_all_item_tags('core_question', 'question', $question->id);
+
+    // Delete the custom filed data for the question.
+    $customfieldhandler = qbank_customfields\customfield\question_handler::create();
+    $customfieldhandler->delete_instance($question->id);
+
     // Now recursively delete all child questions
     if ($children = $DB->get_records('question',
             array('parent' => $questionid), '', 'id, qtype')) {
@@ -400,6 +398,9 @@ function question_delete_question($questionid): void {
         }
     }
 
+    // Delete question comments.
+    $DB->delete_records('comments', ['itemid' => $questionid, 'component' => 'qbank_comment',
+                                            'commentarea' => 'question']);
     // Finally delete the question record itself.
     $DB->delete_records('question', ['id' => $question->id]);
     $DB->delete_records('question_versions', ['id' => $questiondata->versionid]);
@@ -412,7 +413,6 @@ function question_delete_question($questionid): void {
     question_bank::notify_question_edited($question->id);
 
     // Log the deletion of this question.
-    // Any qbank plugins storing additional question data should observe this event and perform the necessary deletion.
     $question->category = $questiondata->categoryid;
     $question->contextid = $questiondata->contextid;
     $event = \core\event\question_deleted::create_from_question_instance($question);
@@ -1486,10 +1486,9 @@ function question_has_capability_on($questionorid, $cap, $notused = -1): bool {
 /**
  * Require capability on question.
  *
- * @param int|stdClass|question_definition $question object or id.
- *      If an object is passed, it should include ->contextid and ->createdby.
- * @param string $cap 'add', 'edit', 'view', 'use', 'move' or 'tag'.
- * @return bool true if the user has the capability. Throws exception if not.
+ * @param object $question
+ * @param string $cap
+ * @return bool
  */
 function question_require_capability_on($question, $cap): bool {
     if (!question_has_capability_on($question, $cap)) {

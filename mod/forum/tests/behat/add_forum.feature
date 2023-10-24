@@ -26,7 +26,9 @@ Feature: Add forum activities and discussions
     And I add a new discussion to "Test forum name" forum with:
       | Subject | Forum post 1 |
       | Message | This is the body |
-    And I am on the "Course 1" course page logged in as student1
+    And I log out
+    And I log in as "student1"
+    And I am on "Course 1" course homepage
     When I add a new discussion to "Test forum name" forum with:
       | Subject | Post with attachment |
       | Message | This is the body |

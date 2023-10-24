@@ -15,6 +15,7 @@ use Packback\Lti1p3\Interfaces\IServiceRequest;
 class LtiServiceConnector implements ILtiServiceConnector
 {
     public const NEXT_PAGE_REGEX = '/<([^>]*)>; ?rel="next"/i';
+
     private $cache;
     private $client;
     private $debuggingMode = false;
@@ -212,7 +213,7 @@ class LtiServiceConnector implements ILtiServiceConnector
 
     private function getNextUrl(array $headers)
     {
-        $subject = $headers['Link'] ?? $headers['link'] ?? '';
+        $subject = $headers['Link'] ?? '';
         preg_match(static::NEXT_PAGE_REGEX, $subject, $matches);
 
         return $matches[1] ?? null;

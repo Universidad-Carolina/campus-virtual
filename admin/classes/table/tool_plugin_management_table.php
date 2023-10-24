@@ -19,7 +19,7 @@ namespace core_admin\table;
 use moodle_url;
 
 /**
- * Admin tool settings.
+ * Tiny admin settings.
  *
  * @package core_admin
  * @copyright 2023 Andrew Lyons <andrew@nicols.co.uk>
@@ -28,6 +28,12 @@ use moodle_url;
 class tool_plugin_management_table extends \core_admin\table\plugin_management_table {
     protected function get_plugintype(): string {
         return 'tool';
+    }
+
+    public function guess_base_url(): void {
+        $this->define_baseurl(
+            new moodle_url('/admin/tools.php')
+        );
     }
 
     protected function get_column_list(): array {
@@ -39,6 +45,6 @@ class tool_plugin_management_table extends \core_admin\table\plugin_management_t
     }
 
     protected function get_action_url(array $params = []): moodle_url {
-        return new moodle_url('/admin/settings.php', array_merge(['section' => 'toolsmanagement'], $params));
+        return new moodle_url('/admin/tool.php', $params);
     }
 }

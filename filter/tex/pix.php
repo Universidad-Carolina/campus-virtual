@@ -50,6 +50,8 @@ define('NO_MOODLE_COOKIES', true); // Because it interferes with caching
             $lateximage = $latex->render($texexp, $image, 12, $density, $background);
             if ($lateximage) {
                 copy($lateximage, $pathname);
+                $latex->clean_up($md5);
+
             } else {
                 // failing that, use mimetex
                 $texexp = $texcache->rawtext;
@@ -64,10 +66,7 @@ define('NO_MOODLE_COOKIES', true); // Because it interferes with caching
     }
 
     if (file_exists($pathname)) {
-        send_file($pathname, $image, YEARSECS, 0, false, false, '', false, [
-            'cacheability' => 'public',
-            'immutable' => true,
-        ]);
+        send_file($pathname, $image);
     } else {
         if (debugging()) {
             echo "The shell command<br />$cmd<br />returned status = $status<br />\n";

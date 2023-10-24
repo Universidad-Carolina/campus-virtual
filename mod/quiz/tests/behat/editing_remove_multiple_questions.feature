@@ -261,9 +261,11 @@ Feature: Edit quiz page - remove multiple questions
     And I click on "selectquestion-2" "checkbox"
     And I click on "Delete selected" "button"
     And I click on "Yes" "button" in the "Confirm" "dialogue"
-    Then I should see "Random question based on filter condition" on quiz page "1"
-    And I should not see "Random question based on filter condition" on quiz page "2"
-    And I should not see "Random question based on filter condition" on quiz page "3"
+    # To make sure question is deleted completely.
+    And I reload the page
+    Then I should see "Random (Test questions)" on quiz page "1"
+    And I should not see "Random (Test questions)" on quiz page "2"
+    And I should not see "Random (Test questions)" on quiz page "3"
     And I should see "Total of marks: 1.00"
     And I should see "Questions: 1"
 
@@ -288,8 +290,10 @@ Feature: Edit quiz page - remove multiple questions
     And I press "Select all"
     And I click on "Delete selected" "button"
     And I click on "Yes" "button" in the "Confirm" "dialogue"
-    Then I should not see "Random question based on filter condition" on quiz page "1"
-    And I should not see "Random question based on filter condition" on quiz page "2"
-    And I should not see "Random question based on filter condition" on quiz page "3"
+     # To make sure question is deleted completely.
+    And I reload the page
+    Then I should not see "Random (Test questions)" on quiz page "1"
+    And I should not see "Random (Test questions)" on quiz page "2"
+    And I should not see "Random (Test questions)" on quiz page "3"
     And I should see "Total of marks: 0.00"
     And I should see "Questions: 0"

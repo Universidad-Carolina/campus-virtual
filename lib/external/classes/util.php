@@ -173,7 +173,6 @@ class util {
      * @param context $context
      * @param int $validuntil date when the token expired
      * @param string $iprestriction allowed ip - if 0 or empty then all ips are allowed
-     * @param string $name token name as a note or token identity at the table view.
      * @return string generated token
      */
     public static function generate_token(
@@ -182,10 +181,9 @@ class util {
         int $userid,
         context $context,
         int $validuntil = 0,
-        string $iprestriction = '',
-        string $name = ''
+        string $iprestriction = ''
     ): string {
-        global $DB, $USER, $SESSION;
+        global $DB, $USER;
 
         // Make sure the token doesn't exist (even if it should be almost impossible with the random generation).
         $numtries = 0;
@@ -222,17 +220,7 @@ class util {
 
         // Generate the private token, it must be transmitted only via https.
         $newtoken->privatetoken = random_string(64);
-
-        if (!$name) {
-            // Generate a token name.
-            $name = self::generate_token_name();
-        }
-        $newtoken->name = $name;
-
-        $tokenid = $DB->insert_record('external_tokens', $newtoken);
-        // Create new session to hold newly created token ID.
-        $SESSION->webservicenewlycreatedtoken = $tokenid;
-
+        $DB->insert_record('external_tokens', $newtoken);
         return $newtoken->token;
     }
 
@@ -411,7 +399,6 @@ class util {
                 $token->iprestriction = null;
                 $token->sid = null;
                 $token->lastaccess = null;
-                $token->name = self::generate_token_name();
                 // Generate the private token, it must be transmitted only via https.
                 $token->privatetoken = random_string(64);
                 $token->id = $DB->insert_record('external_tokens', $token);
@@ -631,18 +618,5 @@ class util {
         );
         $DB->delete_records('external_services', ['component' => $component]);
         $DB->delete_records('external_functions', ['component' => $component]);
-    }
-
-    /**
-     * Generate token name.
-     *
-     * @return string
-     */
-    public static function generate_token_name(): string {
-        return get_string(
-            'tokennameprefix',
-            'webservice',
-            random_string(5)
-        );
     }
 }

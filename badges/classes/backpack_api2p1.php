@@ -36,9 +36,6 @@ use core_badges\backpack_api2p1_mapping;
 use core_badges\oauth2\client;
 use curl;
 use stdClass;
-use core\oauth2\issuer;
-use core\oauth2\endpoint;
-use core\oauth2\discovery\imsbadgeconnect;
 
 /**
  * To process badges with backpack and control api request and this class using for Open Badge API v2.1 methods.
@@ -64,11 +61,8 @@ class backpack_api2p1 {
     /** @var null version api of the backpack. */
     protected $backpackapiversion;
 
-    /** @var issuer The OAuth2 Issuer for this backpack */
-    protected issuer $issuer;
-
-    /** @var endpoint The apiBase endpoint */
-    protected endpoint $apibase;
+    /** @var null api URL of the backpack. */
+    protected $backpackapiurl = '';
 
     /**
      * backpack_api2p1 constructor.
@@ -81,7 +75,8 @@ class backpack_api2p1 {
         if (!empty($externalbackpack)) {
             $this->externalbackpack = $externalbackpack;
             $this->backpackapiversion = $externalbackpack->apiversion;
-            $this->get_clientid($externalbackpack->oauth2_issuerid);
+            $this->backpackapiurl = $externalbackpack->backpackapiurl;
+            $this->get_clientid = $this->get_clientid($externalbackpack->oauth2_issuerid);
 
             if (!($this->tokendata = $this->get_stored_token($externalbackpack->id))
                 && $this->backpackapiversion != OPEN_BADGES_V2P1) {
@@ -90,44 +85,6 @@ class backpack_api2p1 {
         }
 
         $this->define_mappings();
-    }
-
-    /**
-     * Initialises or returns the OAuth2 issuer associated to this backpack.
-     *
-     * @return issuer
-     */
-    protected function get_issuer(): issuer {
-        if (!isset($this->issuer)) {
-            $this->issuer = new \core\oauth2\issuer($this->externalbackpack->oauth2_issuerid);
-        }
-        return $this->issuer;
-    }
-
-    /**
-     * Gets the apiBase url associated to this backpack.
-     *
-     * @return string
-     */
-    protected function get_api_base_url(): string {
-        if (!isset($this->apibase)) {
-            $apibase = endpoint::get_record([
-                'issuerid' => $this->externalbackpack->oauth2_issuerid,
-                'name' => 'apiBase',
-            ]);
-
-            if (empty($apibase)) {
-                imsbadgeconnect::create_endpoints($this->get_issuer());
-                $apibase = endpoint::get_record([
-                    'issuerid' => $this->externalbackpack->oauth2_issuerid,
-                    'name' => 'apiBase',
-                ]);
-            }
-
-            $this->apibase = $apibase;
-        }
-
-        return $this->apibase->get('url');
     }
 
 
@@ -200,7 +157,7 @@ class backpack_api2p1 {
         foreach ($this->mappings as $mapping) {
             if ($mapping->is_match($action)) {
                 return $mapping->request(
-                    $this->get_api_base_url(),
+                    $this->backpackapiurl,
                     $tokenkey,
                     $postdata
                 );
@@ -237,7 +194,6 @@ class backpack_api2p1 {
     private function get_clientid($issuerid) {
         $issuer = \core\oauth2\api::get_issuer($issuerid);
         if (!empty($issuer)) {
-            $this->issuer = $issuer;
             $this->clientid = $issuer->get('clientid');
         }
     }
@@ -256,7 +212,7 @@ class backpack_api2p1 {
             return false;
         }
 
-        $issuer = $this->get_issuer();
+        $issuer = new \core\oauth2\issuer($this->externalbackpack->oauth2_issuerid);
         $client = new client($issuer, new moodle_url('/badges/mybadges.php'), '', $this->externalbackpack);
         if (!$client->is_logged_in()) {
             $redirecturl = new moodle_url('/badges/mybadges.php', ['error' => 'backpackexporterror']);

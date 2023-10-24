@@ -21,7 +21,6 @@ namespace core_reportbuilder\output;
 use html_writer;
 use moodle_url;
 use core\output\inplace_editable;
-use core_external\external_api;
 use core_reportbuilder\permission;
 use core_reportbuilder\local\models\report;
 
@@ -68,7 +67,7 @@ class report_name_editable extends inplace_editable {
     public static function update(int $reportid, string $value): self {
         $report = new report($reportid);
 
-        external_api::validate_context($report->get_context());
+        \core_external\external_api::validate_context($report->get_context());
         permission::require_can_edit_report($report);
 
         $value = trim(clean_param($value, PARAM_TEXT));

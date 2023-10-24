@@ -158,7 +158,8 @@ final class RowIterator implements RowIteratorInterface
 
         return
             (!$hasSuccessfullyFetchedRowData && !$hasNowReachedEndOfFile)
-            || (!$this->options->SHOULD_PRESERVE_EMPTY_ROWS && $isEmptyLine);
+            || (!$this->options->SHOULD_PRESERVE_EMPTY_ROWS && $isEmptyLine)
+        ;
     }
 
     /**

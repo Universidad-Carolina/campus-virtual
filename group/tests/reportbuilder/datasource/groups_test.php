@@ -18,7 +18,6 @@ declare(strict_types=1);
 
 namespace core_group\reportbuilder\datasource;
 
-use core_customfield_generator;
 use core_reportbuilder_generator;
 use core_reportbuilder_testcase;
 use core_reportbuilder\local\filters\{boolean_select, date, select, text};
@@ -45,28 +44,24 @@ class groups_test extends core_reportbuilder_testcase {
         $this->resetAfterTest();
 
         $course = $this->getDataGenerator()->create_course();
-        $userone = $this->getDataGenerator()->create_and_enrol($course, 'student', ['firstname' => 'Zoe']);
-        $usertwo = $this->getDataGenerator()->create_and_enrol($course, 'student', ['firstname' => 'Amy']);
+        $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
 
-        $groupone = $this->getDataGenerator()->create_group(['courseid' => $course->id, 'name' => 'Zebras']);
-        $grouptwo = $this->getDataGenerator()->create_group(['courseid' => $course->id, 'name' => 'Aardvarks']);
-
-        $this->getDataGenerator()->create_group_member(['groupid' => $groupone->id, 'userid' => $userone->id]);
-        $this->getDataGenerator()->create_group_member(['groupid' => $groupone->id, 'userid' => $usertwo->id]);
+        $group = $this->getDataGenerator()->create_group(['courseid' => $course->id]);
+        $this->getDataGenerator()->create_group_member(['userid' => $user->id, 'groupid' => $group->id]);
 
         /** @var core_reportbuilder_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('core_reportbuilder');
         $report = $generator->create_report(['name' => 'Groups', 'source' => groups::class, 'default' => 1]);
 
         $content = $this->get_custom_report_content($report->get('id'));
+        $this->assertCount(1, $content);
 
-        // Default columns are course, group, user. Sorted by each.
-        $courseurl = course_get_url($course);
+        $contentrow = array_values(reset($content));
         $this->assertEquals([
-            ["<a href=\"{$courseurl}\">{$course->fullname}</a>", $grouptwo->name, ''],
-            ["<a href=\"{$courseurl}\">{$course->fullname}</a>", $groupone->name, fullname($usertwo)],
-            ["<a href=\"{$courseurl}\">{$course->fullname}</a>", $groupone->name, fullname($userone)],
-        ], array_map('array_values', $content));
+            "<a href=\"https://www.example.com/moodle/course/view.php?id={$course->id}\">{$course->fullname}</a>", // Course.
+            $group->name, // Group.
+            fullname($user), // User.
+        ], $contentrow);
     }
 
     /**
@@ -115,37 +110,16 @@ class groups_test extends core_reportbuilder_testcase {
      */
     public function test_datasource_non_default_columns(): void {
         $this->resetAfterTest();
-        $this->setAdminUser();
 
         $course = $this->getDataGenerator()->create_course();
         $user = $this->getDataGenerator()->create_and_enrol($course, 'student');
 
-        /** @var core_customfield_generator $generator */
-        $generator = $this->getDataGenerator()->get_plugin_generator('core_customfield');
-
-        // Create group with custom field, and single group member.
-        $groupfieldcategory = $generator->create_category(['component' => 'core_group', 'area' => 'group']);
-        $generator->create_field(['categoryid' => $groupfieldcategory->get('id'), 'shortname' => 'hi']);
-
-        $group = $this->getDataGenerator()->create_group([
-            'courseid' => $course->id,
-            'idnumber' => 'G101',
-            'enrolmentkey' => 'S',
-            'description' => 'My group',
-            'customfield_hi' => 'Hello',
-        ]);
+        $group = $this->getDataGenerator()->create_group(['courseid' => $course->id, 'idnumber' => 'G101', 'enrolmentkey' => 'S',
+            'description' => 'My group']);
         $this->getDataGenerator()->create_group_member(['userid' => $user->id, 'groupid' => $group->id]);
 
-        // Create grouping with custom field, and single group.
-        $groupingfieldcategory = $generator->create_category(['component' => 'core_group', 'area' => 'grouping']);
-        $generator->create_field(['categoryid' => $groupingfieldcategory->get('id'), 'shortname' => 'bye']);
-
-        $grouping = $this->getDataGenerator()->create_grouping([
-            'courseid' => $course->id,
-            'idnumber' => 'GR101',
-            'description' => 'My grouping',
-            'customfield_bye' => 'Goodbye',
-        ]);
+        $grouping = $this->getDataGenerator()->create_grouping(['courseid' => $course->id, 'idnumber' => 'GR101',
+            'description' => 'My grouping']);
         $this->getDataGenerator()->create_grouping_group(['groupingid' => $grouping->id, 'groupid' => $group->id]);
 
         /** @var core_reportbuilder_generator $generator */
@@ -164,7 +138,6 @@ class groups_test extends core_reportbuilder_testcase {
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'group:picture']);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'group:timecreated']);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'group:timemodified']);
-        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'group:customfield_hi']);
 
         // Grouping.
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'grouping:name']);
@@ -172,7 +145,6 @@ class groups_test extends core_reportbuilder_testcase {
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'grouping:description']);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'grouping:timecreated']);
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'grouping:timemodified']);
-        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'grouping:customfield_bye']);
 
         // Group member.
         $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'group_member:timeadded']);
@@ -194,13 +166,11 @@ class groups_test extends core_reportbuilder_testcase {
             $grouppicture,
             $grouptimecreated,
             $grouptimemodified,
-            $groupcustomfield,
             $groupingname,
             $groupingidnumber,
             $groupingdescription,
             $groupingtimecreated,
             $groupingtimemodified,
-            $groupingcustomfield,
             $groupmembertimeadded,
             $groupmemebercomponent,
             $userusername,
@@ -215,13 +185,11 @@ class groups_test extends core_reportbuilder_testcase {
         $this->assertEmpty($grouppicture);
         $this->assertNotEmpty($grouptimecreated);
         $this->assertNotEmpty($grouptimemodified);
-        $this->assertEquals('Hello', $groupcustomfield);
         $this->assertEquals($grouping->name, $groupingname);
         $this->assertEquals('GR101', $groupingidnumber);
         $this->assertEquals(format_text($grouping->description), $groupingdescription);
         $this->assertNotEmpty($groupingtimecreated);
         $this->assertNotEmpty($groupingtimemodified);
-        $this->assertEquals('Goodbye', $groupingcustomfield);
         $this->assertNotEmpty($groupmembertimeadded);
         $this->assertEmpty($groupmemebercomponent);
         $this->assertEquals($user->username, $userusername);

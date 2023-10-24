@@ -152,9 +152,6 @@ class main implements renderable, templatable {
      */
     private $customfieldvalue;
 
-    /** @var bool true if grouping selector should be shown, otherwise false. */
-    protected $displaygroupingselector;
-
     /**
      * main constructor.
      * Initialize the user preferences

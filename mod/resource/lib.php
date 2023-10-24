@@ -271,7 +271,7 @@ function resource_cm_info_view(cm_info $cm) {
     require_once($CFG->dirroot . '/mod/resource/locallib.php');
 
     $resource = (object) ['displayoptions' => $cm->customdata['displayoptions']];
-    $details = resource_get_optional_details($resource, $cm, false);
+    $details = resource_get_optional_details($resource, $cm);
     if ($details) {
         $cm->set_after_link(' ' . html_writer::tag('span', $details,
                 array('class' => 'resourcelinkdetails')));

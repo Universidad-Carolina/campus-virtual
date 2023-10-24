@@ -33,7 +33,6 @@ class activity_packager_test extends \advanced_testcase {
      *
      * @covers ::override_task_setting
      * @covers ::get_all_task_settings
-     * @covers ::get_backup_controller
      */
     public function test_override_task_setting(): void {
         global $USER;
@@ -53,12 +52,9 @@ class activity_packager_test extends \advanced_testcase {
 
         // Fetch all backup task settings.
         $rc = new \ReflectionClass(activity_packager::class);
-        $rcmgetbackup = $rc->getMethod('get_backup_controller');
-        $rcmgetbackup->setAccessible(true);
-        $controller = $rcmgetbackup->invoke($packager);
         $rcmgetall = $rc->getMethod('get_all_task_settings');
         $rcmgetall->setAccessible(true);
-        $tasksettings = $rcmgetall->invoke($packager, $controller);
+        $tasksettings = $rcmgetall->invoke($packager);
 
         // Fetch the default settings and grab an example value (setting_root_users).
         $rootsettings = $tasksettings[\backup_root_task::class];
@@ -82,7 +78,7 @@ class activity_packager_test extends \advanced_testcase {
         $rcmoverridesetting = $rc->getMethod('override_task_setting');
         $rcmoverridesetting->setAccessible(true);
         $rcmoverridesetting->invoke($packager, $tasksettings, $testsettingname, $overridevalue);
-        $tasksettings = $rcmgetall->invoke($packager, $controller);
+        $tasksettings = $rcmgetall->invoke($packager);
         $rootsettings = $tasksettings[\backup_root_task::class];
 
         $newvalue = 99;
@@ -95,9 +91,6 @@ class activity_packager_test extends \advanced_testcase {
         }
 
         $this->assertEquals($overridevalue, $newvalue);
-
-        // We have finished with the backup controller, so destroy it.
-        $controller->destroy();
     }
 
     /**

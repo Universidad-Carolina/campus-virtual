@@ -200,7 +200,6 @@ abstract class testing_module_generator extends component_generator_base {
             'conditionfieldgroup' => array(),
             'conditioncompletiongroup' => array()
         );
-
         foreach ($defaults as $key => $value) {
             if (!isset($moduleinfo->$key)) {
                 $moduleinfo->$key = $value;
@@ -247,10 +246,6 @@ abstract class testing_module_generator extends component_generator_base {
         // Fill the name and intro with default values (if missing).
         if (empty($record->name)) {
             $record->name = get_string('pluginname', $this->get_modulename()).' '.$this->instancecount;
-            // Module label can be created without name specified. It will get its name from the intro's text.
-            if ($this->get_modulename() === 'label') {
-                $record->name = '';
-            }
         }
         if (empty($record->introeditor) && empty($record->intro)) {
             $record->intro = 'Test '.$this->get_modulename().' ' . $this->instancecount;
@@ -282,20 +277,8 @@ abstract class testing_module_generator extends component_generator_base {
         $moduleinfo = add_moduleinfo($record, $course);
 
         // Prepare object to return with additional field cmid.
-        $modulename = $this->get_modulename();
-        $instance = $DB->get_record($modulename, ['id' => $moduleinfo->instance], '*', MUST_EXIST);
+        $instance = $DB->get_record($this->get_modulename(), array('id' => $moduleinfo->instance), '*', MUST_EXIST);
         $instance->cmid = $moduleinfo->coursemodule;
-
-        // Insert files for the 'intro' file area.
-        $instance = $this->insert_files(
-            $instance,
-            $record,
-            $modulename,
-            \context_module::instance($instance->cmid),
-            "mod_{$modulename}",
-            'intro',
-            0
-        );
 
         // If the theme was initialised while creating the module instance, something somewhere called an output
         // function. Rather than leaving this as a hard-to-debug situation, let's make it fail with a clear error.

@@ -31,7 +31,7 @@ import Notification from 'core/notification';
 import Pending from 'core/pending';
 import {prefetchStrings} from 'core/prefetch';
 import SortableList from 'core/sortable_list';
-import {getString} from 'core/str';
+import {get_string as getString} from 'core/str';
 import Templates from 'core/templates';
 import {add as addToast} from 'core/toast';
 import DynamicForm from 'core_form/dynamicform';
@@ -52,8 +52,7 @@ const reloadSettingsConditionsRegion = (reportElement, templateContext) => {
 
     return Templates.renderForPromise('core_reportbuilder/local/settings/conditions', {conditions: templateContext})
         .then(({html, js}) => {
-            const conditionsjs = $.parseHTML(templateContext.javascript, null, true).map(node => node.innerHTML).join("\n");
-            Templates.replaceNode(settingsConditionsRegion, html, js + conditionsjs);
+            Templates.replaceNode(settingsConditionsRegion, html, js + templateContext.javascript);
 
             initConditionsForm();
 

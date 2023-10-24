@@ -1,6 +1,6 @@
-Current version is 0.10.0
+Current version is 0.8.0
 
-# Download latest stable version from https://gitlab.com/php-ai/php-ml
+# Download latest stable version from https://github.com/jorgecasas/php-ml
 # Remove all files but:
    * src/
    * LICENSE
@@ -8,3 +8,6 @@ Current version is 0.10.0
 # Copy LICENSE file to /path/to/moodle/lib/mlbackend/php/phpml
 # Applied patch https://github.com/jorgecasas/php-ml/pull/5
 
+2023/01/26
+----------
+- Changing the repository URL to https://github.com/jorgecasas/php-ml

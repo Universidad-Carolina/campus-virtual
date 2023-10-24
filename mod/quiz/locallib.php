@@ -42,7 +42,6 @@ use mod_quiz\question\bank\qbank_helper;
 use mod_quiz\question\display_options;
 use mod_quiz\quiz_attempt;
 use mod_quiz\quiz_settings;
-use qbank_previewquestion\question_preview_options;
 
 /**
  * @var int We show the countdown timer if there is less than this amount of time left before the
@@ -167,8 +166,9 @@ function quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $time
     $qubaids = new \mod_quiz\question\qubaids_for_users_attempts(
             $quizobj->get_quizid(), $attempt->userid);
 
-    // Partially load all the questions in this quiz.
+    // Fully load all the questions in this quiz.
     $quizobj->preload_questions();
+    $quizobj->load_questions();
 
     // First load all the non-random questions.
     $randomfound = false;
@@ -176,7 +176,7 @@ function quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $time
     $questions = [];
     $maxmark = [];
     $page = [];
-    foreach ($quizobj->get_questions(null, false) as $questiondata) {
+    foreach ($quizobj->get_questions() as $questiondata) {
         $slot += 1;
         $maxmark[$slot] = $questiondata->maxmark;
         $page[$slot] = $questiondata->page;
@@ -187,7 +187,10 @@ function quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $time
             $randomfound = true;
             continue;
         }
-        $questions[$slot] = question_bank::load_question($questiondata->questionid, $quizobj->get_quiz()->shuffleanswers);
+        if (!$quizobj->get_quiz()->shuffleanswers) {
+            $questiondata->options->shuffleanswers = false;
+        }
+        $questions[$slot] = question_bank::make_question($questiondata);
     }
 
     // Then find a question to go in place of each random question.
@@ -203,7 +206,7 @@ function quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $time
         }
         $randomloader = new \core_question\local\bank\random_question_loader($qubaids, $usedquestionids);
 
-        foreach ($quizobj->get_questions(null, false) as $questiondata) {
+        foreach ($quizobj->get_questions() as $questiondata) {
             $slot += 1;
             if ($questiondata->qtype != 'random') {
                 continue;
@@ -213,9 +216,8 @@ function quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $time
 
             // Deal with fixed random choices for testing.
             if (isset($questionids[$quba->next_slot_number()])) {
-                $filtercondition = $questiondata->filtercondition;
-                $filters = $filtercondition['filter'] ?? [];
-                if ($randomloader->is_filtered_question_available($filters, $questionids[$quba->next_slot_number()])) {
+                if ($randomloader->is_question_available($questiondata->category,
+                        (bool) $questiondata->questiontext, $questionids[$quba->next_slot_number()], $tagids)) {
                     $questions[$slot] = question_bank::load_question(
                             $questionids[$quba->next_slot_number()], $quizobj->get_quiz()->shuffleanswers);
                     continue;
@@ -225,10 +227,8 @@ function quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $time
             }
 
             // Normal case, pick one at random.
-            $filtercondition = $questiondata->filtercondition;
-            $filters = $filtercondition['filter'] ?? [];
-            $questionid = $randomloader->get_next_filtered_question_id($filters);
-
+            $questionid = $randomloader->get_next_question_id($questiondata->category,
+                    $questiondata->randomrecurse, $tagids);
             if ($questionid === null) {
                 throw new moodle_exception('notenoughrandomquestions', 'quiz',
                                            $quizobj->view_url(), $questiondata);
@@ -1073,22 +1073,17 @@ function quiz_question_preview_url($quiz, $question, $variant = null, $restartve
  * @param bool $label if true, show the preview question label after the icon
  * @param int $variant which question variant to preview (optional).
  * @param bool $random if question is random, true.
- * @return string the HTML for a preview question icon.
+ * @return the HTML for a preview question icon.
  */
 function quiz_question_preview_button($quiz, $question, $label = false, $variant = null, $random = null) {
     global $PAGE;
     if (!question_has_capability_on($question, 'use')) {
         return '';
     }
-    $structure = quiz_settings::create($quiz->id)->get_structure();
-    if (!empty($question->slot)) {
-        $requestedversion = $structure->get_slot_by_number($question->slot)->requestedversion
-                ?? question_preview_options::ALWAYS_LATEST;
-    } else {
-        $requestedversion = question_preview_options::ALWAYS_LATEST;
-    }
-    return $PAGE->get_renderer('mod_quiz', 'edit')->question_preview_icon(
-            $quiz, $question, $label, $variant, $requestedversion);
+    $slotinfo = quiz_settings::create($quiz->id)->get_structure()->get_slot_by_number($question->slot);
+    return $PAGE->get_renderer('mod_quiz', 'edit')
+        ->question_preview_icon($quiz, $question, $label, $variant,
+                $slotinfo->requestedversion ?: \qbank_previewquestion\question_preview_options::ALWAYS_LATEST);
 }
 
 /**
@@ -1456,7 +1451,7 @@ function quiz_send_overdue_message($attemptobj) {
     $a->courseshortname    = format_string($attemptobj->get_course()->shortname);
     // Quiz info.
     $a->quizname           = $quizname;
-    $a->quizurl            = $attemptobj->view_url()->out(false);
+    $a->quizurl            = $attemptobj->view_url();
     $a->quizlink           = '<a href="' . $a->quizurl . '">' . $quizname . '</a>';
     // Attempt info.
     $a->attemptduedate     = userdate($duedate);
@@ -1620,8 +1615,6 @@ function quiz_get_js_module() {
             ['functiondisabledbysecuremode', 'quiz'],
             ['startattempt', 'quiz'],
             ['timesup', 'quiz'],
-            ['show', 'moodle'],
-            ['hide', 'moodle'],
         ],
     ];
 }
@@ -1732,11 +1725,9 @@ function quiz_add_quiz_question($questionid, $quiz, $page = 0, $maxmark = null) 
               JOIN {question_bank_entries} qbe ON qbe.id = qr.questionbankentryid
              WHERE slot.quizid = ?
                AND qr.component = ?
-               AND qr.questionarea = ?
-               AND qr.usingcontextid = ?";
+               AND qr.questionarea = ?";
 
-    $questionslots = $DB->get_records_sql($sql, [$quiz->id, 'mod_quiz', 'slot',
-            context_module::instance($quiz->cmid)->id]);
+    $questionslots = $DB->get_records_sql($sql, [$quiz->id, 'mod_quiz', 'slot']);
 
     $currententry = get_question_bank_entry($questionid);
 
@@ -1889,18 +1880,54 @@ function quiz_update_section_firstslots($quizid, $direction, $afterslot, $before
  * @param int $addonpage the page on which to add the question.
  * @param int $categoryid the question category to add the question from.
  * @param int $number the number of random questions to add.
- * @deprecated Since Moodle 4.3 MDL-72321
- * @todo Final deprecation in Moodle 4.7 MDL-78091
+ * @param bool $includesubcategories whether to include questoins from subcategories.
+ * @param int[] $tagids Array of tagids. The question that will be picked randomly should be tagged with all these tags.
  */
-function quiz_add_random_questions(stdClass $quiz, int $addonpage, int $categoryid, int $number): void {
-    debugging(
-        'quiz_add_random_questions is deprecated. Please use mod_quiz\structure::add_random_questions() instead.',
-        DEBUG_DEVELOPER
-    );
+function quiz_add_random_questions($quiz, $addonpage, $categoryid, $number,
+        $includesubcategories, $tagids = []) {
+    global $DB;
 
-    $settings = quiz_settings::create($quiz->id);
-    $structure = \mod_quiz\structure::create_for_quiz($settings);
-    $structure->add_random_questions($addonpage, $number, $categoryid);
+    $category = $DB->get_record('question_categories', ['id' => $categoryid]);
+    if (!$category) {
+        new moodle_exception('invalidcategoryid');
+    }
+
+    $catcontext = context::instance_by_id($category->contextid);
+    require_capability('moodle/question:useall', $catcontext);
+
+    // Tags for filter condition.
+    $tags = \core_tag_tag::get_bulk($tagids, 'id, name');
+    $tagstrings = [];
+    foreach ($tags as $tag) {
+        $tagstrings[] = "{$tag->id},{$tag->name}";
+    }
+    // Create the selected number of random questions.
+    for ($i = 0; $i < $number; $i++) {
+        // Set the filter conditions.
+        $filtercondition = new stdClass();
+        $filtercondition->questioncategoryid = $categoryid;
+        $filtercondition->includingsubcategories = $includesubcategories ? 1 : 0;
+        if (!empty($tagstrings)) {
+            $filtercondition->tags = $tagstrings;
+        }
+
+        if (!isset($quiz->cmid)) {
+            $cm = get_coursemodule_from_instance('quiz', $quiz->id, $quiz->course);
+            $quiz->cmid = $cm->id;
+        }
+
+        // Slot data.
+        $randomslotdata = new stdClass();
+        $randomslotdata->quizid = $quiz->id;
+        $randomslotdata->usingcontextid = context_module::instance($quiz->cmid)->id;
+        $randomslotdata->questionscontextid = $category->contextid;
+        $randomslotdata->maxmark = 1;
+
+        $randomslot = new \mod_quiz\local\structure\slot_random($randomslotdata);
+        $randomslot->set_quiz($quiz);
+        $randomslot->set_filter_condition($filtercondition);
+        $randomslot->insert($addonpage);
+    }
 }
 
 /**

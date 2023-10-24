@@ -147,6 +147,7 @@ if (!empty($instanceid) && !empty($roleid)) {
     }
 
     $table = new flexible_table('course-participation-'.$course->id.'-'.$cm->id.'-'.$roleid);
+    $table->course = $course;
 
     $actionheader = !empty($action) ? get_string($action) : get_string('allactions');
 

@@ -52,6 +52,7 @@ class attempt {
      */
     public function __construct(stdClass $record) {
         $this->record = $record;
+        $this->results = null;
     }
 
     /**

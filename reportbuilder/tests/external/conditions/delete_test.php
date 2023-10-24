@@ -84,7 +84,7 @@ class delete_test extends externallib_advanced_testcase {
         /** @var core_reportbuilder_generator $generator */
         $generator = $this->getDataGenerator()->get_plugin_generator('core_reportbuilder');
 
-        $report = $generator->create_report(['name' => 'My report', 'source' => users::class, 'default' => false]);
+        $report = $generator->create_report(['name' => 'My report', 'source' => users::class]);
         $condition = $generator->create_condition(['reportid' => $report->get('id'), 'uniqueidentifier' => 'user:email']);
 
         $user = $this->getDataGenerator()->create_user();

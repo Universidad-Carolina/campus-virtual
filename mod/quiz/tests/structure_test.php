@@ -16,11 +16,6 @@
 
 namespace mod_quiz;
 
-defined('MOODLE_INTERNAL') || die();
-
-global $CFG;
-require_once($CFG->dirroot . '/mod/quiz/tests/quiz_question_helper_test_trait.php');
-
 /**
  * Unit tests for quiz events.
  *
@@ -30,8 +25,6 @@ require_once($CFG->dirroot . '/mod/quiz/tests/quiz_question_helper_test_trait.ph
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class structure_test extends \advanced_testcase {
-
-    use \quiz_question_helper_test_trait;
 
     /**
      * Create a course with an empty quiz.
@@ -698,7 +691,7 @@ class structure_test extends \advanced_testcase {
 
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $cat = $questiongenerator->create_question_category();
-        $this->add_random_questions($quizobj->get_quizid(), 1, $cat->id, 1);
+        quiz_add_random_questions($quizobj->get_quiz(), 1, $cat->id, 1, false);
         $structure = structure::create_for_quiz($quizobj);
         $sql = 'SELECT qsr.*
                  FROM {question_set_references} qsr

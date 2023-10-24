@@ -335,7 +335,7 @@ class helper {
         // When there is a logged in user, her information will be passed to the player. It will be used for tracking.
         $usersettings = [];
         if (isloggedin()) {
-            $usersettings['name'] = fullname($USER, has_capability('moodle/site:viewfullnames', $systemcontext));
+            $usersettings['name'] = $USER->username;
             $usersettings['id'] = $USER->id;
         }
         $savefreq = false;
