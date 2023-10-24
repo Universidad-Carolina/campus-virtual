@@ -720,19 +720,6 @@ class completion_info {
                 /** @var activity_custom_completion $cmcompletion */
                 $cmcompletion = new $cmcompletionclass($cminfo, $userid, $completionstate);
                 $response = $cmcompletion->get_overall_completion_state() != COMPLETION_INCOMPLETE;
-            } else {
-                // Fallback to the get_completion_state callback.
-                $cmcompletionclass = "mod_{$cminfo->modname}\\completion\\custom_completion";
-                $function = $cminfo->modname . '_get_completion_state';
-                if (!function_exists($function)) {
-                    $this->internal_systemerror("Module {$cminfo->modname} claims to support FEATURE_COMPLETION_HAS_RULES " .
-                        "but does not implement the custom completion class $cmcompletionclass which extends " .
-                        "\core_completion\activity_custom_completion.");
-                }
-                debugging("*_get_completion_state() callback functions such as $function have been deprecated and should no " .
-                    "longer be used. Please implement the custom completion class $cmcompletionclass which extends " .
-                    "\core_completion\activity_custom_completion.", DEBUG_DEVELOPER);
-                $response = $function($this->course, $cm, $userid, COMPLETION_AND, $completionstate);
             }
 
             if (!$response) {
@@ -928,7 +915,9 @@ class completion_info {
         $DB->delete_records_select('course_modules_completion',
                 'coursemoduleid IN (SELECT id FROM {course_modules} WHERE course=?)',
                 array($this->course_id));
-
+        $DB->delete_records_select('course_modules_viewed',
+            'coursemoduleid IN (SELECT id FROM {course_modules} WHERE course=?)',
+            [$this->course_id]);
         // Wipe course completion data too.
         $this->delete_course_completion_data();
     }

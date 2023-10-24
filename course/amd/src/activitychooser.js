@@ -26,8 +26,8 @@ import * as Repository from 'core_course/local/activitychooser/repository';
 import selectors from 'core_course/local/activitychooser/selectors';
 import CustomEvents from 'core/custom_interaction_events';
 import * as Templates from 'core/templates';
-import * as ModalFactory from 'core/modal_factory';
-import {get_string as getString} from 'core/str';
+import {getString} from 'core/str';
+import Modal from 'core/modal';
 import Pending from 'core/pending';
 
 // Set up some JS module wide constants that can be added to in the future.
@@ -43,6 +43,8 @@ const ACTIVITIESRESOURCESREC = 5;
 // Module types.
 const ACTIVITY = 0;
 const RESOURCE = 1;
+
+let initialized = false;
 
 /**
  * Set up the activity chooser.
@@ -67,6 +69,12 @@ export const init = (courseId, chooserConfig) => {
  * @param {Object} chooserConfig Any PHP config settings that we may need to reference
  */
 const registerListenerEvents = (courseId, chooserConfig) => {
+
+    // Ensure we only add our listeners once.
+    if (initialized) {
+        return;
+    }
+
     const events = [
         'click',
         CustomEvents.events.activate,
@@ -170,6 +178,8 @@ const registerListenerEvents = (courseId, chooserConfig) => {
             }
         });
     });
+
+    initialized = true;
 };
 
 /**
@@ -279,27 +289,21 @@ const templateDataBuilder = (data, chooserConfig) => {
  * Given an object we want to build a modal ready to show
  *
  * @method buildModal
- * @param {Promise} bodyPromise
+ * @param {Promise} body
  * @param {String|Boolean} footer Either a footer to add or nothing
  * @return {Object} The modal ready to display immediately and render body in later.
  */
-const buildModal = (bodyPromise, footer) => {
-    return ModalFactory.create({
-        type: ModalFactory.types.DEFAULT,
-        title: getString('addresourceoractivity'),
-        body: bodyPromise,
-        footer: footer.customfootertemplate,
-        large: true,
-        scrollable: false,
-        templateContext: {
-            classes: 'modchooser'
-        }
-    })
-    .then(modal => {
-        modal.show();
-        return modal;
-    });
-};
+const buildModal = (body, footer) => Modal.create({
+    body,
+    title: getString('addresourceoractivity'),
+    footer: footer.customfootertemplate,
+    large: true,
+    scrollable: false,
+    templateContext: {
+        classes: 'modchooser'
+    },
+    show: true,
+});
 
 /**
  * A small helper function to handle the case where there are no more favourites

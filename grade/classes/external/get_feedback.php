@@ -92,7 +92,7 @@ class get_feedback extends external_api {
             'feedbacktext' => $grade->feedback,
             'title' => $gradeitem->get_name(true),
             'fullname' => fullname($user),
-            'picture' => $OUTPUT->user_picture($user, ['size' => 35, 'link' => false]),
+            'picture' => $OUTPUT->user_picture($user, ['size' => 50, 'link' => false]),
             'additionalfield' => empty($extrafields) ? '' : $user->{$extrafields[0]},
         ];
     }
@@ -108,7 +108,7 @@ class get_feedback extends external_api {
             'title' => new external_value(PARAM_TEXT, 'Title of the grade item that the feedback is for'),
             'fullname' => new external_value(PARAM_TEXT, 'Students name'),
             'picture' => new external_value(PARAM_RAW, 'Students picture'),
-            'additionalfield' => new external_value(PARAM_TEXT, 'Additional field for the user (email or ID number, for example)'),
+            'additionalfield' => new external_value(PARAM_RAW, 'Additional field for the user (email or ID number, for example)'),
         ]);
     }
 }

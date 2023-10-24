@@ -24,6 +24,7 @@ import {debounce} from 'core/utils';
 import * as Templates from 'core/templates';
 import * as Selectors from 'core_grades/searchwidget/selectors';
 import Notification from 'core/notification';
+import Log from 'core/log';
 
 /**
  * Build the base searching widget.
@@ -44,6 +45,7 @@ export const init = async(
     unsearchableContent = null,
     afterSelect = null,
 ) => {
+    Log.debug('The core_grades/searchwidget/basewidget component is deprecated. Please refer to core/search_combobox() instead.');
     bodyPromise.then(async(bodyContent) => {
         // Render the body content.
         widgetContentContainer.innerHTML = bodyContent;
@@ -77,6 +79,12 @@ export const init = async(
 export const registerListenerEvents = (widgetContentContainer, data, searchFunc, afterSelect = null) => {
     const searchResultsContainer = widgetContentContainer.querySelector(Selectors.regions.searchResults);
     const searchInput = widgetContentContainer.querySelector(Selectors.actions.search);
+
+    if (!searchInput) {
+        // Too late. The widget is already closed and its content is empty.
+        return;
+    }
+
     // We want to focus on the first known user interable element within the dropdown.
     searchInput.focus();
     const clearSearchButton = widgetContentContainer.querySelector(Selectors.actions.clearSearch);

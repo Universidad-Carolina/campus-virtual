@@ -20,7 +20,8 @@
  * @copyright   2023 Kevin Percy <kevin.percy@moodle.com>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-import ModalFactory from 'core/modal_factory';
+import Modal from 'core/modal';
+import Notification from 'core/notification';
 import ajax from 'core/ajax';
 import Templates from 'core/templates';
 
@@ -37,11 +38,18 @@ const Selectors = {
  * @returns {Promise}
  */
 const getModal = async(courseid, userid, itemid) => {
-    const feedbackData = await fetchFeedback(courseid, userid, itemid);
+    let feedbackData;
 
-    return ModalFactory.create({
+    try {
+        feedbackData = await fetchFeedback(courseid, userid, itemid);
+    } catch (e) {
+        return Promise.reject(e);
+    }
+
+    return Modal.create({
         removeOnClose: true,
-        large: true
+        large: true,
+        verticallyCentered: true,
     })
     .then(modal => {
         const body = Templates.render('core_grades/feedback_modal', {
@@ -94,7 +102,8 @@ const registerEventListeners = () => {
             const userid = e.target.closest('tr').dataset.uid;
             const itemid = e.target.closest('td').dataset.itemid;
 
-            getModal(courseid, userid, itemid);
+            getModal(courseid, userid, itemid)
+                .catch(Notification.exception);
         }
     });
 };
